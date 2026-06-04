@@ -173,17 +173,25 @@
   <div class="box hidden" id="veilErr">
     <h2>Add your Google Maps key</h2>
     <p>The 3D map needs a Google Maps Platform API key with the <b>Maps JavaScript API</b> and <b>Map Tiles API</b> enabled (billing on).</p>
-    <p>Open <code>index.html</code> and set <code>const API_KEY = "&hellip;"</code> near the top of the script, then redeploy.</p>
+    <p>In Vercel, open <b>Project → Settings → Environment Variables</b>, add <code>GOOGLE_MAPS_API_KEY</code> with your key, then redeploy.</p>
     <p style="margin-top:14px"><a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener">Get a key &rarr;</a> &middot; <a href="https://developers.google.com/maps/documentation/javascript/3d-maps-overview" target="_blank" rel="noopener">3D Maps docs &rarr;</a></p>
   </div>
 </div>
 
 <script>
 /* ============================================================
-   CONFIG — paste your Google Maps Platform API key here.
+   CONFIG — the Google Maps key is NOT stored here. It is held in
+   a Vercel environment variable (GOOGLE_MAPS_API_KEY) and served
+   at runtime by /api/config so it never enters the git repo.
    Requires: Maps JavaScript API + Map Tiles API (billing enabled).
    ============================================================ */
-const API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
+let API_KEY = "";
+async function fetchKey(){
+  try{
+    const r = await fetch("/api/config", { cache:"no-store" });
+    if(r.ok){ const j = await r.json(); API_KEY = (j && j.apiKey) || ""; }
+  }catch(e){ /* leave API_KEY empty -> setup overlay shows */ }
+}
 
 const CAT_COLORS = {
   "City Hotel":"#5b8dd6","Resort / Leisure":"#caa44e","Spa / Wellness Resort":"#6fb38a",
@@ -198,13 +206,14 @@ const state={ cats:new Set(), brands:new Set(), countries:new Set(), q:"" };
 /* ---- bootstrap loader for Google Maps JS ---- */
 function loadMaps(){
   return new Promise((res,rej)=>{
-    if(!API_KEY || API_KEY.indexOf("YOUR_")===0){ rej("nokey"); return; }
+    if(!API_KEY){ rej("nokey"); return; }
     ((g)=>{let h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});let d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{a=m.createElement("script");e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({key:API_KEY, v:"alpha"});
     res();
   });
 }
 
 async function init(){
+  await fetchKey();
   try{ await loadMaps(); }
   catch(e){ showError(); return; }
   try{
