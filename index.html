@@ -243,13 +243,12 @@ function showError(){
 
 /* ---- markers ---- */
 async function buildMarkers(){
-  const {Marker3DInteractiveElement, AltitudeMode, CollisionBehavior} = await google.maps.importLibrary("maps3d");
+  const {Marker3DInteractiveElement, AltitudeMode} = await google.maps.importLibrary("maps3d");
   for(const f of FEATURES){
     const [lng,lat]=f.geometry.coordinates;
     const m=new Marker3DInteractiveElement({
       position:{lat,lng,altitude:0},
-      altitudeMode:AltitudeMode.CLAMP_TO_GROUND,
-      collisionBehavior:CollisionBehavior.OPTIONAL_AND_HIDES_LOWER_PRIORITY
+      altitudeMode:AltitudeMode.CLAMP_TO_GROUND
     });
     try{
       const pin=new PinElementClass({background:catColor(f.properties.category),borderColor:"#fffaf0",glyphColor:"#fffaf0",scale:0.7});
