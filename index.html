@@ -15,7 +15,7 @@
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{font-family:var(--sans);background:var(--bg);color:var(--ink);overflow:hidden}
-  gmp-map-3d{position:absolute;top:64px;left:0;width:100%;height:calc(100% - 64px);display:block}
+  gmp-map-3d{position:absolute;top:64px;left:0;width:100%;height:calc(100% - 64px);display:block;touch-action:none}
 
   .topbar{position:absolute;top:0;left:0;right:0;height:64px;z-index:1000;display:flex;align-items:center;gap:14px;padding:10px 18px;background:linear-gradient(180deg,#070a0f,#0a0d13);border-bottom:1px solid var(--line)}
   .brand{display:flex;align-items:center;gap:13px;min-width:0}
@@ -108,7 +108,7 @@
     .rail{top:auto;bottom:0;left:0;right:0;width:auto;max-height:62%;border-radius:14px 14px 0 0;transform:translateY(calc(100% - 46px));transition:transform .3s}
     .rail.open{transform:none}
     .railtoggle{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;cursor:pointer;font-size:12.5px;letter-spacing:.5px;color:var(--ink);font-weight:700}
-    .veil{inset:58px 0 0 0}.panel{top:58px;height:calc(100% - 58px);width:100%}
+    .veil{inset:58px 0 0 0}.panel{top:58px;height:calc(100% - 58px);width:100%;max-width:100%}
     .hint{display:none}
   }
 </style>
@@ -164,7 +164,7 @@
   </div>
 </section>
 
-<div class="hint" id="hint"><b>Drag</b> to orbit &middot; <b>scroll</b> to zoom &middot; tap a pin for VIP details</div>
+<div class="hint" id="hint"><b>Drag</b> to orbit &middot; <b>scroll</b> to zoom &middot; <b>tap</b> a pin for VIP details</div>
 
 <!-- veil: loading + setup help -->
 <div class="veil" id="veil">
@@ -279,11 +279,19 @@ async function init(){
     PinElementClass = markerLib.PinElement;
 
     map3d = new Map3DElement({
-      center:{lat:25, lng:10, altitude:0},
-      range:22000000, tilt:55, heading:0,
+      center:{lat:18.2, lng:-66.5, altitude:0},
+      range:9500000, tilt:20, heading:0,
       mode: MapMode.HYBRID
     });
     document.body.appendChild(map3d);
+
+    // Allow single-finger pan on mobile and scroll-to-zoom without Ctrl on desktop
+    try { map3d.gestureHandling = 'greedy'; } catch(e) {}
+    window.addEventListener('wheel', e => {
+      if(map3d && (e.target === map3d || map3d.contains(e.target))){
+        e.preventDefault();
+      }
+    }, {passive:false, capture:true});
 
     const data = await fetch("hotels.geojson").then(r=>r.json());
     FEATURES = data.features;
