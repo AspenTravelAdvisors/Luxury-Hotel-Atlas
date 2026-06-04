@@ -59,7 +59,7 @@
   .opt .ct{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
   .reset{margin:12px 2px 2px;text-align:center;font-size:12px;color:var(--accent);cursor:pointer;padding:9px;border:1px dashed var(--line);border-radius:9px}
   .reset:hover{background:var(--panel2)}
-  .railtoggle{display:none}
+  .railtoggle{display:none!important}
 
   /* detail panel */
   .panel{position:absolute;z-index:1001;top:64px;right:0;height:calc(100% - 64px);width:392px;max-width:92vw;background:linear-gradient(180deg,var(--panel),#080b10);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,.55);transform:translateX(105%);transition:transform .32s cubic-bezier(.22,.61,.36,1);display:flex;flex-direction:column}
@@ -105,9 +105,6 @@
     .topbar h1{font-size:18px}.topbar h1 .bev{display:none}
     .topbar p,.partner span{display:none}
     .logochip.mark{height:40px}.logochip.mark img{height:30px;max-width:120px}
-    .rail{top:auto;bottom:0;left:0;right:0;width:auto;max-height:62%;border-radius:14px 14px 0 0;transform:translateY(calc(100% - 46px));transition:transform .3s}
-    .rail.open{transform:none}
-    .railtoggle{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;cursor:pointer;font-size:12.5px;letter-spacing:.5px;color:var(--ink);font-weight:700}
     .veil{inset:58px 0 0 0}.panel{top:58px;height:calc(100% - 58px);width:100%;max-width:100%}
     .hint{display:none}
   }
@@ -356,7 +353,7 @@ function buildFilters(){
   document.getElementById("search").addEventListener("input",e=>{state.q=e.target.value.toLowerCase().trim();applyFilters();});
   document.getElementById("reset").addEventListener("click",resetFilters);
   document.getElementById("close").addEventListener("click",()=>document.getElementById("panel").classList.remove("open"));
-  document.getElementById("railToggle").addEventListener("click",()=>document.getElementById("rail").classList.toggle("open"));
+  /* railToggle no longer used — dock pills handle mobile toggle */
 }
 function optRow(setName,val,n,sw,program){
   const l=document.createElement("label"); l.className="opt";
@@ -431,6 +428,75 @@ function openDetail(f){
 }
 
 init();
+</script>
+
+<!-- ===== Bottom dock (pill controls) ===== -->
+<style>
+  /* ---------- Unified bottom toolbar (dock) ---------- */
+  .dock{position:absolute;z-index:1200;left:50%;bottom:16px;transform:translateX(-50%);
+    display:inline-flex;align-items:center;gap:4px;padding:4px;
+    background:rgba(17,21,29,.88);border:1px solid rgba(255,255,255,.1);border-radius:50px;
+    -webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);
+    box-shadow:0 8px 32px rgba(0,0,0,.5)}
+  .dockbtn{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;gap:8px;height:42px;
+    padding:0 18px;border-radius:40px;border:none;background:transparent;color:var(--ink);
+    font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:.3px;cursor:pointer;transition:.15s;text-decoration:none}
+  .dockbtn:hover{background:rgba(255,255,255,.08)}
+  .dockbtn:active{transform:scale(.95)}
+  .dockbtn .pi{font-size:16px;line-height:1;color:var(--accent);width:16px;text-align:center}
+  #panelPill{opacity:.4;pointer-events:none}
+  body.panel-active #panelPill{opacity:1;pointer-events:auto}
+  /* Rail and panel toggle via body classes */
+  .rail{transition:opacity .26s ease,transform .26s ease,visibility .26s}
+  body.rail-hidden .rail{opacity:0;transform:translateX(-12px) scale(.97);visibility:hidden;pointer-events:none}
+  body.panel-collapsed .panel.open{transform:translateX(105%)}
+  @media (max-width:680px){
+    .dockbtn .pl{display:none}
+    .dockbtn{padding:0 13px}
+    /* When filters shown on mobile: overlay the map from top */
+    body.rail-shown .rail{position:absolute !important;top:72px !important;left:12px !important;right:12px !important;
+      bottom:auto !important;width:auto !important;max-height:calc(100% - 140px) !important;
+      border-radius:14px !important;transform:none !important;opacity:1 !important;
+      visibility:visible !important;display:flex !important;
+      background:rgba(17,21,29,.96) !important;border:1px solid var(--line) !important;
+      box-shadow:var(--shadow) !important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px) !important}
+  }
+</style>
+
+<div class="dock" role="toolbar" aria-label="Map controls">
+  <button id="railPill" class="dockbtn" type="button" aria-label="Show or hide the filters menu" title="Show / hide filters"><span class="pi">&#9776;</span><span class="pl">Filters</span></button>
+  <button id="panelPill" class="dockbtn" type="button" aria-label="Show or hide the details panel" title="Show / hide details"><span class="pi">&#8249;</span><span class="pl">Details</span></button>
+  <a id="helpDock" class="dockbtn" href="mailto:Book@BeVvip.com" role="button" aria-label="Need help — contact us"><span class="pi">?</span><span class="pl">Need Help</span></a>
+</div>
+
+<script>
+(function(){
+  var body=document.body;
+  var railPill=document.getElementById('railPill');
+  var panelPill=document.getElementById('panelPill');
+  function setIcon(btn,html){ btn.querySelector('.pi').innerHTML=html; }
+  var railCollapsed=false; // filters visible on load (incl. mobile)
+  function syncRail(){
+    body.classList.toggle('rail-hidden',railCollapsed);
+    body.classList.toggle('rail-shown',!railCollapsed);
+    setIcon(railPill,railCollapsed?'&#9776;':'&#10005;');
+  }
+  function syncPanel(){
+    setIcon(panelPill, body.classList.contains('panel-collapsed')?'&#8249;':'&#10005;');
+  }
+  railPill.addEventListener('click',function(){ railCollapsed=!railCollapsed; syncRail(); });
+  panelPill.addEventListener('click',function(){ body.classList.toggle('panel-collapsed'); syncPanel(); });
+  // Watch panel open/close to sync pill state and auto-hide filters
+  var panel=document.getElementById('panel');
+  new MutationObserver(function(){
+    var open=panel.classList.contains('open');
+    body.classList.toggle('panel-active',open);
+    if(!open){ body.classList.remove('panel-collapsed'); }
+    railCollapsed=open; syncRail();
+    syncPanel();
+  }).observe(panel,{attributes:true,attributeFilter:['class']});
+  syncRail(); syncPanel();
+})();
 </script>
 </body>
 </html>
