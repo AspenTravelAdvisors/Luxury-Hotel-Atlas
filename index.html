@@ -54,6 +54,7 @@
   .opt:hover{background:var(--panel2)}
   .opt input{accent-color:var(--accent);width:14px;height:14px;flex:0 0 auto;margin:0}
   .opt .sw{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+  .opt .blogo{width:20px;height:20px;border-radius:4px;flex:0 0 auto;object-fit:contain;background:#fff;padding:1px}
   .opt .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .opt .ct{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
   .reset{margin:12px 2px 2px;text-align:center;font-size:12px;color:var(--accent);cursor:pointer;padding:9px;border:1px dashed var(--line);border-radius:9px}
@@ -81,6 +82,8 @@
   .book:hover{filter:brightness(1.05)}
   .pw{font-size:11.5px;color:var(--muted);text-align:center;margin-top:8px}
   .pw b{color:var(--accent2);letter-spacing:1px}
+  .prog-logo{display:flex;align-items:center;gap:9px}
+  .prog-logo img{width:26px;height:26px;border-radius:5px;object-fit:contain;background:#fff;padding:2px;flex:0 0 auto}
 
   .hint{position:absolute;z-index:800;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(17,21,29,.92);border:1px solid var(--line);border-radius:30px;padding:8px 18px;font-size:12.5px;color:var(--muted);box-shadow:var(--shadow);backdrop-filter:blur(6px);max-width:92vw;text-align:center}
   .hint b{color:var(--ink)}
@@ -198,6 +201,60 @@ const CAT_COLORS = {
   "Beach Resort":"#e0a96d","Lodge / Safari":"#b07a45","Villas / Residences":"#c178a6",
   "Island Resort":"#4fb0b0","Mountain / Ski":"#9fb1c8"
 };
+
+/* Brand / Program → domain for logo lookup */
+const BRAND_DOMAINS = {
+  "Virtuoso":"virtuoso.com",
+  "Marriott STARS":"marriott.com",
+  "Four Seasons Preferred Partner":"fourseasons.com",
+  "Hilton for Luxury":"hilton.com",
+  "Auberge Resorts Collection":"aubergeresorts.com",
+  "Mandarin Oriental Fan Club":"mandarinoriental.com",
+  "Shangri-La The Luxury Circle":"shangri-la.com",
+  "Rosewood Elite":"rosewoodhotels.com",
+  "Cadence Individual Partner":"cadencetravel.com",
+  "Belmond Bellini Club":"belmond.com",
+  "Kempinski Club 1897":"kempinski.com",
+  "The Peninsula Pen Club":"peninsula.com",
+  "Rocco Forte Knights":"roccofortehotels.com",
+  "Relais & Châteaux":"relaischateaux.com",
+  "Jumeirah Passport to Luxury":"jumeirah.com",
+  "Canaves Oia Luxury Resorts":"canavesthe.com",
+  "Oetker Collection":"oetkercollection.com",
+  "Maybourne Illustrated":"maybourne.com",
+  "Autograph Collection":"autographhotels.marriott.com",
+  "Outrigger":"outrigger.com",
+  "Ritz-Carlton Reserve":"ritzcarlton.com",
+  "Hartling Group (The Palms / The Shore Club / The Sands)":"thepalms.tc",
+  "Fairmont":"fairmont.com",
+  "Doyle Collection (The Circle)":"doylecollection.com",
+  "Gran Meliá":"granmelia.com",
+  "Waldorf Astoria":"waldorfastoria.hilton.com",
+  "Ted Turner Reserves":"tedturnerreserves.com",
+  "Design Hotels":"designhotels.com",
+  "Hyatt Privé":"hyatt.com",
+  "Thompson Hotels":"thompsonhotels.com",
+  "Angsana":"angsana.com",
+  "Grecotel":"grecotel.com",
+  "Gurney's":"gurneysresorts.com",
+  "Viceroy":"viceroyhotelsandresorts.com",
+  "Langham":"langhamhotels.com",
+  "Al Zorah":"alzorah.ae",
+  "Taj Hotels":"tajhotels.com",
+  "Corinthia":"corinthia.com",
+};
+
+function brandLogo(program){
+  const domain = BRAND_DOMAINS[program];
+  if(!domain) return null;
+  return `https://logo.clearbit.com/${domain}`;
+}
+function brandLogoFallback(img, program){
+  const domain = BRAND_DOMAINS[program];
+  if(!domain){ img.style.display="none"; return; }
+  img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  img.onerror = ()=>{ img.style.display="none"; };
+}
 const catColor = c => CAT_COLORS[c] || "#caa44e";
 
 let FEATURES=[], MARKERS=[], map3d, PinElementClass;
@@ -283,7 +340,7 @@ function buildFilters(){
     cat.appendChild(optRow("cats",v,n,catColor(v)));
   }
   const brand=document.getElementById("grp-brand");
-  for(const [v,n] of counts("program")){ brand.appendChild(optRow("brands",v,n)); }
+  for(const [v,n] of counts("program")){ brand.appendChild(optRow("brands",v,n,null,v)); }
   const country=document.getElementById("grp-country");
   for(const [v,n] of counts("country")){ country.appendChild(optRow("countries",v,n)); }
 
@@ -293,12 +350,19 @@ function buildFilters(){
   document.getElementById("close").addEventListener("click",()=>document.getElementById("panel").classList.remove("open"));
   document.getElementById("railToggle").addEventListener("click",()=>document.getElementById("rail").classList.toggle("open"));
 }
-function optRow(setName,val,n,sw){
+function optRow(setName,val,n,sw,program){
   const l=document.createElement("label"); l.className="opt";
   const cb=document.createElement("input"); cb.type="checkbox";
   cb.addEventListener("change",()=>{ cb.checked?state[setName].add(val):state[setName].delete(val); applyFilters(); });
   l.appendChild(cb);
   if(sw){ const s=document.createElement("span"); s.className="sw"; s.style.background=sw; l.appendChild(s); }
+  if(program && BRAND_DOMAINS[program]){
+    const img=document.createElement("img"); img.className="blogo";
+    img.src=`https://logo.clearbit.com/${BRAND_DOMAINS[program]}`;
+    img.alt=""; img.loading="lazy";
+    img.onerror=()=>brandLogoFallback(img,program);
+    l.appendChild(img);
+  }
   const nm=document.createElement("span"); nm.className="nm"; nm.textContent=val; nm.title=val; l.appendChild(nm);
   const ct=document.createElement("span"); ct.className="ct"; ct.textContent=n; l.appendChild(ct);
   return l;
@@ -337,7 +401,13 @@ function openDetail(f){
   const chips=document.getElementById("d-chips"); chips.innerHTML="";
   [p.program,p.category].filter(Boolean).forEach(t=>{const c=document.createElement("span");c.className="chip";c.textContent=t;chips.appendChild(c);});
   document.getElementById("d-addr").textContent=p.address||"—";
-  document.getElementById("d-prog").textContent=p.program||"—";
+  const progEl=document.getElementById("d-prog");
+  if(p.program && BRAND_DOMAINS[p.program]){
+    const logo=brandLogo(p.program);
+    progEl.innerHTML=`<span class="prog-logo"><img src="${logo}" alt="" onerror="brandLogoFallback(this,'${p.program.replace(/'/g,"\\'")}')"> ${p.program}</span>`;
+  } else {
+    progEl.textContent=p.program||"—";
+  }
   const ups=document.getElementById("d-ups"); ups.innerHTML="";
   (p.upgrades||[]).forEach(u=>{const li=document.createElement("li");li.textContent=u;ups.appendChild(li);});
   const book=document.getElementById("d-book");
