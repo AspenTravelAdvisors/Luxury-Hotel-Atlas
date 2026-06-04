@@ -15,7 +15,7 @@
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
   body{font-family:var(--sans);background:var(--bg);color:var(--ink);overflow:hidden}
-  #map{position:absolute;left:0;right:0;bottom:0;top:64px;background:#0a0d13;z-index:1;border:0}
+  #map{position:absolute;top:64px;left:0;width:100%;height:calc(100% - 64px);background:#0a0d13;z-index:1;border:0;display:block}
   .topbar{position:absolute;top:0;left:0;right:0;height:64px;z-index:1000;display:flex;align-items:center;gap:14px;padding:10px 18px;background:linear-gradient(180deg,#070a0f,#0a0d13);border-bottom:1px solid var(--line)}
   .brand{display:flex;align-items:center;gap:13px}
   .topbar h1{font-family:var(--serif);font-size:23px;margin:0;letter-spacing:.4px;font-weight:600;line-height:1}
@@ -40,6 +40,7 @@
     .partner span{display:none}
     .logochip.mark{height:40px}
     .logochip.mark img{height:30px;max-width:120px}
+    #map{top:58px;height:calc(100% - 58px)}
   }
 </style>
 </head>
