@@ -256,6 +256,7 @@ async function buildMarkers(){
     }catch(_){}
     m.addEventListener("gmp-click",()=>openDetail(f));
     m._feat=f;
+    m._pos={lat,lng,altitude:0};
     MARKERS.push(m);
   }
   // append in chunks so the UI stays responsive
@@ -315,7 +316,7 @@ function applyFilters(){
   clearTimeout(filterTimer);
   filterTimer=setTimeout(()=>{
     let shown=0;
-    for(const m of MARKERS){ const ok=matches(m._feat); m.style.display=ok?"":"none"; if(ok) shown++; }
+    for(const m of MARKERS){ const ok=matches(m._feat); m.position=ok?m._pos:null; if(ok) shown++; }
     document.getElementById("count").textContent=shown.toLocaleString();
   },90);
 }
