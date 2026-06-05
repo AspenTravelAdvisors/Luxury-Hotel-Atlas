@@ -475,7 +475,7 @@ init();
   var railPill=document.getElementById('railPill');
   var panelPill=document.getElementById('panelPill');
   function setIcon(btn,html){ btn.querySelector('.pi').innerHTML=html; }
-  var railCollapsed=false; // filters visible on load (incl. mobile)
+  var railCollapsed=window.matchMedia('(max-width:640px)').matches; // hidden on mobile/small screens by default
   function syncRail(){
     body.classList.toggle('rail-hidden',railCollapsed);
     body.classList.toggle('rail-shown',!railCollapsed);
