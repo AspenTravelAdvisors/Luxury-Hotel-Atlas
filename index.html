@@ -40,8 +40,17 @@
   .rail .rhead h2{font-size:12px;text-transform:uppercase;letter-spacing:1.3px;color:var(--muted);margin:0}
   .rail .rhead .count{font-size:11.5px;color:var(--accent);font-variant-numeric:tabular-nums;font-weight:700}
   .rail .scroller{overflow-y:auto;padding:6px 12px 12px}
-  .search{width:100%;margin:10px 0 4px;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:13px}
+  .searchwrap{position:relative;margin:10px 0 4px}
+  .search{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:13px}
   .search::placeholder{color:var(--muted)}
+  .aclist{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--panel2);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.45);overflow:hidden;display:none}
+  .aclist.open{display:block}
+  .acrow{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;border-top:1px solid var(--line)}
+  .acrow:first-child{border-top:0}
+  .acrow:hover,.acrow.active{background:rgba(255,255,255,.06)}
+  .acrow .acsw{width:8px;height:8px;border-radius:50%;flex:none}
+  .acrow .acmain{font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acrow .acsub{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
   .grp{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
   .grp:first-of-type{border-top:0}
   .grp .gh{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:5px 2px;user-select:none}
@@ -134,7 +143,10 @@
     <div class="count"><span id="count">2,500</span> shown</div>
   </div>
   <div class="scroller">
-    <input class="search" id="search" type="text" placeholder="Search hotel or city&hellip;" autocomplete="off">
+    <div class="searchwrap">
+      <input class="search" id="search" type="text" placeholder="Search hotel or city&hellip;" autocomplete="off">
+      <div class="aclist" id="aclist"></div>
+    </div>
     <div class="grp" data-grp="cat"><div class="gh"><h3>Category</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-cat"></div></div>
     <div class="grp collapsed" data-grp="brand"><div class="gh"><h3>Brand / Program</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-brand"></div></div>
     <div class="grp collapsed" data-grp="country"><div class="gh"><h3>Country</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-country"></div></div>
@@ -254,7 +266,7 @@ function brandLogoFallback(img, program){
 }
 const catColor = c => CAT_COLORS[c] || "#caa44e";
 
-let FEATURES=[], MARKERS=[], map3d, PinElementClass;
+let FEATURES=[], MARKERS=[], map3d, PinElementClass, SELECTED=null;
 const state={ cats:new Set(), brands:new Set(), countries:new Set(), q:"" };
 
 /* ---- bootstrap loader for Google Maps JS ---- */
@@ -309,16 +321,16 @@ async function buildMarkers(){
   for(const f of FEATURES){
     const [lng,lat]=f.geometry.coordinates;
     const m=new Marker3DInteractiveElement({
-      position:{lat,lng,altitude:0},
-      altitudeMode:AltitudeMode.CLAMP_TO_GROUND
+      position:{lat,lng,altitude:12},
+      altitudeMode:AltitudeMode.RELATIVE_TO_MESH
     });
     try{
       const pin=new PinElementClass({background:catColor(f.properties.category),borderColor:"#fffaf0",glyphColor:"#fffaf0",scale:0.7});
-      m.append(pin);
+      m.append(pin); m._pin=pin;
     }catch(_){}
     m.addEventListener("gmp-click",()=>openDetail(f));
     m._feat=f;
-    m._pos={lat,lng,altitude:0};
+    m._pos={lat,lng,altitude:12};
     MARKERS.push(m);
   }
   // append in chunks so the UI stays responsive
@@ -350,7 +362,10 @@ function buildFilters(){
   for(const [v,n] of counts("country")){ country.appendChild(optRow("countries",v,n)); }
 
   document.querySelectorAll(".grp .gh").forEach(h=>h.addEventListener("click",()=>h.parentElement.classList.toggle("collapsed")));
-  document.getElementById("search").addEventListener("input",e=>{state.q=e.target.value.toLowerCase().trim();applyFilters();});
+  const sIn=document.getElementById("search");
+  sIn.addEventListener("input",e=>{state.q=e.target.value.toLowerCase().trim();applyFilters();renderAC();});
+  sIn.addEventListener("focus",renderAC);
+  document.addEventListener("click",e=>{ if(!e.target.closest(".searchwrap")) document.getElementById("aclist").classList.remove("open"); });
   document.getElementById("reset").addEventListener("click",resetFilters);
   document.getElementById("close").addEventListener("click",()=>document.getElementById("panel").classList.remove("open"));
   /* railToggle no longer used — dock pills handle mobile toggle */
@@ -396,6 +411,32 @@ function resetFilters(){
   applyFilters();
 }
 
+/* ---- search autocomplete (local data only) ---- */
+function renderAC(){
+  const box=document.getElementById("aclist");
+  const q=state.q;
+  if(!q || q.length<2){ box.classList.remove("open"); box.innerHTML=""; return; }
+  // rank: name-startsWith first, then city-startsWith, then any substring
+  const score=f=>{const p=f.properties;const n=(p.name||"").toLowerCase(),c=(p.city||"").toLowerCase();
+    if(n.startsWith(q))return 0; if(c.startsWith(q))return 1;
+    if(n.includes(q))return 2; if(c.includes(q))return 3; return 4;};
+  const hits=FEATURES.filter(matches).map(f=>[score(f),f]).filter(x=>x[0]<4)
+    .sort((a,b)=>a[0]-b[0]).slice(0,8);
+  if(!hits.length){ box.classList.remove("open"); box.innerHTML=""; return; }
+  box.innerHTML="";
+  for(const [,f] of hits){
+    const p=f.properties;
+    const r=document.createElement("div"); r.className="acrow";
+    const sw=document.createElement("span"); sw.className="acsw"; sw.style.background=catColor(p.category);
+    const mn=document.createElement("span"); mn.className="acmain"; mn.textContent=p.name;
+    const sb=document.createElement("span"); sb.className="acsub"; sb.textContent=[p.city,p.country].filter(Boolean).join(", ");
+    r.append(sw,mn,sb);
+    r.addEventListener("click",()=>{ box.classList.remove("open"); openDetail(f); });
+    box.appendChild(r);
+  }
+  box.classList.add("open");
+}
+
 /* ---- detail panel ---- */
 function openDetail(f){
   const p=f.properties;
@@ -420,6 +461,11 @@ function openDetail(f){
   if(url){ book.href=url; book.style.display=""; } else book.style.display="none";
   document.getElementById("d-pw").innerHTML = p.password ? `Password: <b>${p.password}</b>` : "";
   document.getElementById("panel").classList.add("open");
+  // enlarge the selected pin, reset the previously selected one
+  const sel=MARKERS.find(m=>m._feat===f);
+  if(SELECTED && SELECTED._pin) try{SELECTED._pin.scale=0.7;}catch(_){}
+  if(sel && sel._pin) try{sel._pin.scale=1.25;}catch(_){}
+  SELECTED=sel||null;
   // fly the camera to the hotel
   if(map3d){
     map3d.center={lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],altitude:0};
