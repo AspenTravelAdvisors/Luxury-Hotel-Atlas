@@ -521,7 +521,8 @@ init();
   var railPill=document.getElementById('railPill');
   var panelPill=document.getElementById('panelPill');
   function setIcon(btn,html){ btn.querySelector('.pi').innerHTML=html; }
-  var railCollapsed=window.matchMedia('(max-width:640px)').matches; // hidden on mobile/small screens by default
+  var mq=window.matchMedia("(max-width:640px)");
+  var railCollapsed=mq.matches; // hidden on mobile/small screens by default
   function syncRail(){
     body.classList.toggle('rail-hidden',railCollapsed);
     body.classList.toggle('rail-shown',!railCollapsed);
@@ -538,7 +539,7 @@ init();
     var open=panel.classList.contains('open');
     body.classList.toggle('panel-active',open);
     if(!open){ body.classList.remove('panel-collapsed'); }
-    railCollapsed=open; syncRail();
+    if(mq.matches){ railCollapsed=open; syncRail(); }   // only auto-hide filters on mobile/small screens
     syncPanel();
   }).observe(panel,{attributes:true,attributeFilter:['class']});
   syncRail(); syncPanel();
