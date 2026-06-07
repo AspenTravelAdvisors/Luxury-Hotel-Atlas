@@ -135,6 +135,16 @@
   </a>
 </div>
 
+<style>
+  /* active deep-link filter chips */
+  .activeFilters{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
+  .afchip{display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+    font-family:var(--sans,inherit);font-size:12px;font-weight:600;letter-spacing:.2px;
+    color:#11151d;background:var(--accent,#caa44e);border:none;border-radius:30px;padding:5px 11px;line-height:1}
+  .afchip span{font-size:14px;opacity:.8}
+  .afchip:hover{filter:brightness(1.06)}
+</style>
+
 <!-- filter rail -->
 <aside class="rail collapsed-none" id="rail">
   <div class="railtoggle" id="railToggle">&#9776;&nbsp; Filters &amp; results</div>
@@ -147,6 +157,7 @@
       <input class="search" id="search" type="text" placeholder="Search hotel or city&hellip;" autocomplete="off">
       <div class="aclist" id="aclist"></div>
     </div>
+    <div class="activeFilters" id="activeFilters" style="display:none"></div>
     <div class="grp" data-grp="cat"><div class="gh"><h3>Category</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-cat"></div></div>
     <div class="grp collapsed" data-grp="brand"><div class="gh"><h3>Brand / Program</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-brand"></div></div>
     <div class="grp collapsed" data-grp="country"><div class="gh"><h3>Country</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-country"></div></div>
@@ -267,7 +278,8 @@ function brandLogoFallback(img, program){
 const catColor = c => CAT_COLORS[c] || "#caa44e";
 
 let FEATURES=[], MARKERS=[], map3d, PinElementClass, SELECTED=null;
-const state={ cats:new Set(), brands:new Set(), countries:new Set(), q:"" };
+const state={ cats:new Set(), brands:new Set(), countries:new Set(), q:"",
+  brand:null, region:null, ids:new Set() };  // brand/region/ids arrive via deep link
 
 /* ---- bootstrap loader for Google Maps JS ---- */
 function loadMaps(){
@@ -304,7 +316,10 @@ async function init(){
 
     FEATURES = await loadInventory();
     buildFilters();
-    await buildMarkers();
+    applyDeepLink();           // read ?region/brand/program/category/country/ids/q
+    await buildMarkers();      // ends with applyFilters(), so the subset is live
+    fitToResults();            // frame the map to the deep-linked subset
+    highlightDeepLinkIds();    // enlarge (and, if single, open) any ids
     document.getElementById("veil").classList.add("hidden");
   }catch(e){ console.error(e); showError(); }
 }
@@ -354,6 +369,69 @@ function toFeature(h){
       bookUrl:h.bookUrl, password:h.bookPassword
     }
   };
+}
+
+/* ---- deep-link intake (chat-to-map handoff, SPEC §7) ---- */
+function applyDeepLink(){
+  const sp=new URLSearchParams(location.search);
+  const val=k=>{const v=sp.get(k);return v==null?"":v.trim();};
+  // checkbox-backed axes: tick the matching option so the UI reflects the filter
+  const tick=(grpId,setName,v)=>{
+    if(!v) return;
+    const want=v.toLowerCase();
+    document.querySelectorAll(`#${grpId} .opt`).forEach(l=>{
+      const nm=l.querySelector(".nm"); if(!nm) return;
+      if(nm.textContent.toLowerCase()===want){
+        const cb=l.querySelector("input"); if(cb){cb.checked=true; state[setName].add(nm.textContent);}
+      }
+    });
+  };
+  tick("grp-cat","cats",val("category"));
+  tick("grp-brand","brands",val("program"));   // UI "Brand / Program" axis is program
+  tick("grp-country","countries",val("country"));
+  const q=val("q");
+  if(q){ const s=document.getElementById("search"); if(s) s.value=q; state.q=q.toLowerCase(); }
+  // deep-link-only axes (no checkbox UI): brand=actual brand, region=marquee key
+  if(val("brand")) state.brand=val("brand");
+  if(val("region")) state.region=val("region");
+  const ids=val("ids");
+  if(ids) ids.split(",").map(s=>s.trim()).filter(Boolean).forEach(id=>state.ids.add(id));
+  renderActiveChips();
+}
+function renderActiveChips(){
+  const box=document.getElementById("activeFilters"); if(!box) return;
+  const chips=[];
+  if(state.brand) chips.push(["Brand: "+state.brand,()=>{state.brand=null;}]);
+  if(state.region) chips.push(["Region: "+state.region,()=>{state.region=null;}]);
+  if(state.ids.size) chips.push(["Shortlist: "+state.ids.size,()=>{state.ids.clear();}]);
+  box.innerHTML="";
+  if(!chips.length){ box.style.display="none"; return; }
+  box.style.display="";
+  for(const [label,clear] of chips){
+    const c=document.createElement("button"); c.type="button"; c.className="afchip";
+    c.innerHTML=label+' <span aria-hidden="true">&times;</span>';
+    c.setAttribute("aria-label","Remove filter "+label);
+    c.addEventListener("click",()=>{ clear(); renderActiveChips(); applyFilters(); fitToResults(); });
+    box.appendChild(c);
+  }
+}
+function fitToResults(){
+  if(!map3d) return;
+  const shown=FEATURES.filter(matches);
+  if(!shown.length || shown.length===FEATURES.length) return; // keep default world view
+  let minLa=90,maxLa=-90,minLo=180,maxLo=-180;
+  for(const f of shown){ const [lo,la]=f.geometry.coordinates;
+    if(la<minLa)minLa=la; if(la>maxLa)maxLa=la; if(lo<minLo)minLo=lo; if(lo>maxLo)maxLo=lo; }
+  const cLat=(minLa+maxLa)/2, cLng=(minLo+maxLo)/2;
+  const span=Math.max(maxLa-minLa,(maxLo-minLo)*Math.cos(cLat*Math.PI/180));
+  let range=Math.min(Math.max(span*111000*2.2, 4000), 12000000);
+  try{ map3d.center={lat:cLat,lng:cLng,altitude:0}; map3d.range=range; map3d.tilt=span>8?0:45; map3d.heading=0; }catch(_){}
+}
+function highlightDeepLinkIds(){
+  if(!state.ids.size) return;
+  const hit=MARKERS.filter(m=>state.ids.has(m._feat.properties.id));
+  for(const m of hit){ if(m._pin) try{ m._pin.scale=1.25; }catch(_){} }
+  if(hit.length===1) openDetail(hit[0]._feat);  // single shortlist -> open it
 }
 
 /* ---- markers ---- */
@@ -433,6 +511,10 @@ function matches(f){
   if(state.cats.size && !state.cats.has(p.category)) return false;
   if(state.brands.size && !state.brands.has(p.program)) return false;
   if(state.countries.size && !state.countries.has(p.country)) return false;
+  // deep-link-only axes
+  if(state.ids.size && !state.ids.has(p.id)) return false;
+  if(state.brand && (p.brand||"").toLowerCase()!==state.brand.toLowerCase()) return false;
+  if(state.region && (p.marqueeRegion||"").toLowerCase()!==state.region.toLowerCase()) return false;
   if(state.q){ const hay=(p.name+" "+p.city+" "+p.region+" "+p.country).toLowerCase(); if(hay.indexOf(state.q)<0) return false; }
   return true;
 }
@@ -447,8 +529,12 @@ function applyFilters(){
 }
 function resetFilters(){
   state.cats.clear();state.brands.clear();state.countries.clear();state.q="";
+  state.brand=null;state.region=null;state.ids.clear();
   document.querySelectorAll(".opt input").forEach(c=>c.checked=false);
   document.getElementById("search").value="";
+  renderActiveChips();
+  // drop deep-link params so a reload starts clean
+  try{ history.replaceState(null,"",location.pathname); }catch(_){}
   applyFilters();
 }
 
