@@ -321,6 +321,8 @@ async function init(){
     fitToResults();            // frame the map to the deep-linked subset
     highlightDeepLinkIds();    // enlarge (and, if single, open) any ids
     document.getElementById("veil").classList.add("hidden");
+    // tell an embedding app (Base Camp) the atlas is warm and ready for filters
+    try{ if(window.parent && window.parent!==window) window.parent.postMessage({type:"ATLAS_READY"}, "*"); }catch(_){}
   }catch(e){ console.error(e); showError(); }
 }
 
@@ -372,9 +374,13 @@ function toFeature(h){
 }
 
 /* ---- deep-link intake (chat-to-map handoff, SPEC §7) ---- */
+// Driven either by the URL (on load) or by a live postMessage from Base Camp
+// (the Guide embeds this atlas and pushes filters without reloading).
 function applyDeepLink(){
   const sp=new URLSearchParams(location.search);
-  const val=k=>{const v=sp.get(k);return v==null?"":v.trim();};
+  applyParams(k=>{const v=sp.get(k);return v==null?"":String(v).trim();});
+}
+function applyParams(val){
   // checkbox-backed axes: tick the matching option so the UI reflects the filter
   const tick=(grpId,setName,v)=>{
     if(!v) return;
@@ -395,9 +401,29 @@ function applyDeepLink(){
   if(val("brand")) state.brand=val("brand");
   if(val("region")) state.region=val("region");
   const ids=val("ids");
-  if(ids) ids.split(",").map(s=>s.trim()).filter(Boolean).forEach(id=>state.ids.add(id));
+  if(ids) String(ids).split(",").map(s=>s.trim()).filter(Boolean).forEach(id=>state.ids.add(id));
   renderActiveChips();
 }
+// Clear every active filter without touching the URL/history (used before
+// applying an external filter pushed by the embedding app).
+function clearAllFilters(){
+  state.cats.clear();state.brands.clear();state.countries.clear();state.q="";
+  state.brand=null;state.region=null;state.ids.clear();
+  document.querySelectorAll(".opt input").forEach(c=>c.checked=false);
+  const s=document.getElementById("search"); if(s) s.value="";
+}
+// Live re-filter from a Base Camp message: reset, apply, re-frame, highlight.
+function applyExternalFilter(params){
+  clearAllFilters();
+  for(const m of MARKERS){ if(m._pin){ try{ m._pin.scale=0.7; }catch(_){} } }
+  SELECTED=null;
+  applyParams(k=>{const v=params&&params[k];return v==null?"":String(v).trim();});
+  applyFilters(); fitToResults(); highlightDeepLinkIds();
+}
+window.addEventListener("message",(e)=>{
+  const d=e&&e.data;
+  if(d && d.type==="BASECAMP_FILTER") applyExternalFilter(d.params||{});
+});
 function renderActiveChips(){
   const box=document.getElementById("activeFilters"); if(!box) return;
   const chips=[];
