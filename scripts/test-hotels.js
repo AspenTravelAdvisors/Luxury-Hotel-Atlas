@@ -11,6 +11,7 @@ const {
   query,
   buildDeepLink,
   getById,
+  regions,
   ATLAS_URL,
 } = require("../lib/hotels");
 
@@ -100,6 +101,19 @@ test("q free-text matches name/brand/city/country", () => {
   );
 });
 
+test("q multi-word is token-AND with stopwords dropped", () => {
+  // single token unchanged
+  assert.ok(query({ q: "aman" }).total > 0);
+  // phrase: every meaningful token must match some field
+  const phrase = query({ q: "Aman Japan", limit: 200 });
+  assert.ok(phrase.total > 0);
+  assert.ok(phrase.results.every((h) => ci(h.brand).includes("aman") && ci(h.country).includes("japan")));
+  // connector word "in" must not break it
+  assert.equal(query({ q: "Aman in Japan" }).total, phrase.total);
+  // a token that matches nothing yields nothing
+  assert.equal(query({ q: "Aman Narnia" }).total, 0);
+});
+
 test("bbox returns only in-box records", () => {
   const box = "139,35,140,36"; // Tokyo-ish
   const r = query({ bbox: box, limit: 200 });
@@ -179,6 +193,32 @@ test("getById valid + invalid", () => {
   assert.equal(getById("nope_id"), null);
 });
 
+// --- region aggregate ------------------------------------------------------
+test("regions(): counts reconcile with per-record region tally", () => {
+  const agg = regions();
+  const mapped = countRaw((h) => h.region != null);
+  assert.equal(agg.total, mapped);
+  assert.equal(agg.unmapped, hotels.length - mapped);
+  assert.equal(agg.total + agg.unmapped, 2500);
+  // each region's count matches a raw recount, and bbox bounds every member
+  for (const r of agg.regions) {
+    const members = hotels.filter((h) => h.region === r.region);
+    assert.equal(r.count, members.length);
+    const [minLng, minLat, maxLng, maxLat] = r.bbox;
+    assert.ok(
+      members.every(
+        (h) => h.lng >= minLng && h.lng <= maxLng && h.lat >= minLat && h.lat <= maxLat
+      ),
+      `bbox bounds all ${r.region} members`
+    );
+    assert.ok(r.deepLink.includes(`region=${r.region}`));
+  }
+  // sorted by count desc
+  for (let i = 1; i < agg.regions.length; i++) {
+    assert.ok(agg.regions[i - 1].count >= agg.regions[i].count);
+  }
+});
+
 // --- handler-level smoke (mock req/res) ------------------------------------
 function mockRes() {
   return {
@@ -219,6 +259,16 @@ test("handler GET /api/luxury-hotels/:id valid + 404", () => {
   const miss = mockRes();
   handler({ method: "GET", query: { id: "nope" } }, miss);
   assert.equal(miss.statusCode, 404);
+});
+
+test("handler GET /api/regions", () => {
+  const handler = require("../api/regions.js");
+  const res = mockRes();
+  handler({ method: "GET", query: {} }, res);
+  assert.equal(res.statusCode, 200);
+  assert.ok(Array.isArray(res.body.regions));
+  assert.ok(res.body.regions.length > 0);
+  assert.ok(res.body.regions[0].bbox.length === 4);
 });
 
 console.log(`\n${passed} tests passed`);
