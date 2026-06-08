@@ -114,6 +114,19 @@ test("q multi-word is token-AND with stopwords dropped", () => {
   assert.equal(query({ q: "Aman Narnia" }).total, 0);
 });
 
+test("q drops generic hotel-shopping words", () => {
+  const clean = query({ country: "United States", q: "Aspen" });
+  const natural = query({ country: "United States", q: "Aspen luxury hotel" });
+  assert.equal(natural.total, clean.total);
+  assert.ok(natural.results.some((h) => h.name === "The Little Nell"));
+});
+
+test("q can match category and tags", () => {
+  const r = query({ country: "Greece", q: "beach resort", limit: 20 });
+  assert.ok(r.total > 0);
+  assert.ok(r.results.some((h) => ci(h.category).includes("beach") || (h.tags || []).includes("beach")));
+});
+
 test("bbox returns only in-box records", () => {
   const box = "139,35,140,36"; // Tokyo-ish
   const r = query({ bbox: box, limit: 200 });
