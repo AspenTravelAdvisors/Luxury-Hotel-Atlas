@@ -127,6 +127,33 @@ test("q can match category and tags", () => {
   assert.ok(r.results.some((h) => ci(h.category).includes("beach") || (h.tags || []).includes("beach")));
 });
 
+test("hotel fit metadata enriches query results", () => {
+  const r = query({ q: "Little Nell", limit: 1 });
+  assert.equal(r.count, 1);
+  assert.ok(r.results[0].fit);
+  assert.ok(r.results[0].fit.bestFit);
+  assert.ok(r.results[0].fit.serviceStyle);
+  assert.ok(r.results[0].fit.description);
+});
+
+test("q can match fit keywords and notes", () => {
+  const r = query({ q: "scene-aware", limit: 20 });
+  assert.ok(r.total > 0);
+  assert.ok(r.results.every((h) => h.fit && /scene-aware/i.test([
+    h.fit.serviceStyle,
+    h.fit.evaluationNotes,
+    ...(h.fit.searchKeywords || []),
+  ].filter(Boolean).join(" "))));
+});
+
+test("intent sorts by matching trip score", () => {
+  const r = query({ country: "United States", intent: "simpleVip", limit: 10 });
+  assert.equal(r.count, 10);
+  const scores = r.results.map((h) => h.fit && h.fit.matchScores && h.fit.matchScores.simpleVip);
+  assert.ok(scores.every((v) => Number.isFinite(v)));
+  assert.ok(scores.every((v, i) => i === 0 || scores[i - 1] >= v));
+});
+
 test("bbox returns only in-box records", () => {
   const box = "139,35,140,36"; // Tokyo-ish
   const r = query({ bbox: box, limit: 200 });
