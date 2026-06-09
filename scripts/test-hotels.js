@@ -134,6 +134,8 @@ test("hotel fit metadata enriches query results", () => {
   assert.ok(r.results[0].fit.bestFit);
   assert.ok(r.results[0].fit.serviceStyle);
   assert.ok(r.results[0].fit.description);
+  assert.ok(Object.prototype.hasOwnProperty.call(r.results[0].fit, "forbesRating"));
+  assert.ok(Object.prototype.hasOwnProperty.call(r.results[0].fit, "aaaDiamondRating"));
 });
 
 test("q can match fit keywords and notes", () => {
@@ -149,9 +151,25 @@ test("q can match fit keywords and notes", () => {
 test("intent sorts by matching trip score", () => {
   const r = query({ country: "United States", intent: "simpleVip", limit: 10 });
   assert.equal(r.count, 10);
-  const scores = r.results.map((h) => h.fit && h.fit.matchScores && h.fit.matchScores.simpleVip);
+  const topRating = Math.max(...r.results.map((h) => (h.fit && h.fit.aaaDiamondRating) || 0));
+  const ratedPrefix = r.results.filter((h) => ((h.fit && h.fit.aaaDiamondRating) || 0) === topRating);
+  const scores = ratedPrefix.map((h) => h.fit && h.fit.matchScores && h.fit.matchScores.simpleVip);
   assert.ok(scores.every((v) => Number.isFinite(v)));
   assert.ok(scores.every((v, i) => i === 0 || scores[i - 1] >= v));
+});
+
+test("AAA 5 Diamond hotels sort ahead of lower or unrated matches", () => {
+  const r = query({ country: "United States", limit: 40 });
+  assert.ok(r.results.some((h) => h.fit && h.fit.aaaDiamondRating === 5));
+  const ratings = r.results.map((h) => (h.fit && h.fit.aaaDiamondRating) || 0);
+  const firstNonFive = ratings.findIndex((v) => v < 5);
+  assert.ok(firstNonFive === -1 || ratings.slice(firstNonFive).every((v) => v < 5));
+});
+
+test("q can match AAA Diamond rating metadata", () => {
+  const r = query({ q: "AAA 5 Diamond", limit: 20 });
+  assert.ok(r.total > 0);
+  assert.ok(r.results.every((h) => h.fit && h.fit.aaaDiamondRating === 5));
 });
 
 test("bbox returns only in-box records", () => {
