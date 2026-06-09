@@ -642,7 +642,7 @@ function openDetail(f){
     progEl.textContent=p.program||"—";
   }
   const ups=document.getElementById("d-ups"); ups.innerHTML="";
-  (p.upgrades||[]).forEach(u=>{const li=document.createElement("li");li.textContent=u;ups.appendChild(li);});
+  (p.upgrades||[]).forEach(u=>{const li=document.createElement("li");li.textContent=formatVipBenefit(u);ups.appendChild(li);});
   const book=document.getElementById("d-book");
   let url=(p.bookUrl||"").trim(); if(url && !/^https?:/i.test(url)) url="https://"+url;
   if(url){ book.href=url; book.style.display=""; } else book.style.display="none";
@@ -658,6 +658,13 @@ function openDetail(f){
     map3d.center={lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],altitude:0};
     map3d.range=2600; map3d.tilt=67;
   }
+}
+
+function formatVipBenefit(raw){
+  const text=String(raw==null?"":raw).trim();
+  if(!text || /^["']?first priority["']?\b/i.test(text)) return text;
+  if(/^room upgrade\b/i.test(text) || /^upgrade\b/i.test(text)) return '"First Priority" '+text;
+  return text;
 }
 
 init();
