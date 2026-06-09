@@ -82,6 +82,11 @@
   .row{display:flex;gap:10px;font-size:13px;margin-bottom:10px}
   .row .lk{color:var(--muted);min-width:74px;flex:0 0 auto;text-transform:uppercase;letter-spacing:.5px;font-size:10.5px;padding-top:2px}
   .row .vl{color:var(--ink);line-height:1.4}
+  .quote{font-family:var(--serif);font-size:18px;line-height:1.35;color:var(--accent2);border-left:2px solid var(--accent);padding:2px 0 2px 12px;margin:0 0 15px}
+  .fitgrid{display:grid;grid-template-columns:1fr;gap:7px;margin:0 0 14px}
+  .fititem{border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.025);padding:8px 10px}
+  .fititem .fk{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:2px}
+  .fititem .fv{font-size:12.5px;color:var(--ink);line-height:1.35}
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 14px}
   .chip{font-size:11px;padding:4px 9px;border-radius:20px;border:1px solid var(--line);background:var(--panel2);color:var(--accent2)}
   .ups{list-style:none;padding:0;margin:6px 0 0}
@@ -174,6 +179,12 @@
     <div class="sub" id="d-loc">&mdash;</div>
   </div>
   <div class="body">
+    <div class="quote" id="d-desc" style="display:none"></div>
+    <div class="fitgrid" id="d-fitgrid" style="display:none">
+      <div class="fititem"><div class="fk">Best Fit</div><div class="fv" id="d-bestfit">—</div></div>
+      <div class="fititem"><div class="fk">Atmosphere</div><div class="fv" id="d-atmosphere">—</div></div>
+      <div class="fititem"><div class="fk">Service Style</div><div class="fv" id="d-service">—</div></div>
+    </div>
     <div class="chips" id="d-chips"></div>
     <div class="row"><div class="lk">Address</div><div class="vl" id="d-addr">&mdash;</div></div>
     <div class="row"><div class="lk">Program</div><div class="vl" id="d-prog">&mdash;</div></div>
@@ -368,7 +379,8 @@ function toFeature(h){
       category:h.category, country:h.country, city:h.city,
       region:h.adminRegion, marqueeRegion:h.region,
       address:h.address, upgrades:h.vipUpgrades,
-      bookUrl:h.bookUrl, password:h.bookPassword
+      bookUrl:h.bookUrl, password:h.bookPassword,
+      fit:h.fit||null
     }
   };
 }
@@ -597,8 +609,18 @@ function openDetail(f){
   document.getElementById("d-cat").style.color=catColor(p.category);
   document.getElementById("d-name").textContent=p.name;
   document.getElementById("d-loc").textContent=[p.city,p.region,p.country].filter(Boolean).join(", ");
+  const fit=p.fit||{};
+  const desc=document.getElementById("d-desc");
+  if(fit.description){ desc.textContent=fit.description; desc.style.display=""; }
+  else { desc.textContent=""; desc.style.display="none"; }
+  const grid=document.getElementById("d-fitgrid");
+  const hasFit=fit.bestFit||fit.atmosphere||fit.serviceStyle;
+  grid.style.display=hasFit?"":"none";
+  document.getElementById("d-bestfit").textContent=fit.bestFit||"—";
+  document.getElementById("d-atmosphere").textContent=fit.atmosphere||"—";
+  document.getElementById("d-service").textContent=fit.serviceStyle||"—";
   const chips=document.getElementById("d-chips"); chips.innerHTML="";
-  [p.program,p.category].filter(Boolean).forEach(t=>{const c=document.createElement("span");c.className="chip";c.textContent=t;chips.appendChild(c);});
+  [p.program,p.category,...(fit.intentTags||[]).slice(0,3)].filter(Boolean).forEach(t=>{const c=document.createElement("span");c.className="chip";c.textContent=t;chips.appendChild(c);});
   document.getElementById("d-addr").textContent=p.address||"—";
   const progEl=document.getElementById("d-prog");
   if(p.program && BRAND_DOMAINS[p.program]){
