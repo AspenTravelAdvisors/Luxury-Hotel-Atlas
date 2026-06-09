@@ -138,6 +138,13 @@ test("hotel fit metadata enriches query results", () => {
   assert.ok(Object.prototype.hasOwnProperty.call(r.results[0].fit, "aaaDiamondRating"));
 });
 
+test("upgrade benefits are labeled as First Priority", () => {
+  const r = query({ q: "Little Nell", limit: 1 });
+  assert.equal(r.count, 1);
+  assert.ok(r.results[0].vipUpgrades.includes('"First Priority" Room Upgrade'));
+  assert.ok(!r.results[0].vipUpgrades.includes("Room Upgrade"));
+});
+
 test("q can match fit keywords and notes", () => {
   const r = query({ q: "scene-aware", limit: 20 });
   assert.ok(r.total > 0);
