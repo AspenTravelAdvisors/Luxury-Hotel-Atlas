@@ -182,7 +182,6 @@
     <div class="quote" id="d-desc" style="display:none"></div>
     <div class="fitgrid" id="d-fitgrid" style="display:none">
       <div class="fititem"><div class="fk">Best Fit</div><div class="fv" id="d-bestfit">—</div></div>
-      <div class="fititem"><div class="fk">Atmosphere</div><div class="fv" id="d-atmosphere">—</div></div>
       <div class="fititem"><div class="fk">Service Style</div><div class="fv" id="d-service">—</div></div>
     </div>
     <div class="chips" id="d-chips"></div>
@@ -614,10 +613,9 @@ function openDetail(f){
   if(fit.description){ desc.textContent=fit.description; desc.style.display=""; }
   else { desc.textContent=""; desc.style.display="none"; }
   const grid=document.getElementById("d-fitgrid");
-  const hasFit=fit.bestFit||fit.atmosphere||fit.serviceStyle;
+  const hasFit=fit.bestFit||fit.serviceStyle;
   grid.style.display=hasFit?"":"none";
   document.getElementById("d-bestfit").textContent=fit.bestFit||"—";
-  document.getElementById("d-atmosphere").textContent=fit.atmosphere||"—";
   document.getElementById("d-service").textContent=fit.serviceStyle||"—";
   const chips=document.getElementById("d-chips"); chips.innerHTML="";
   [p.program,p.category,...(fit.intentTags||[]).slice(0,3)].filter(Boolean).forEach(t=>{const c=document.createElement("span");c.className="chip";c.textContent=t;chips.appendChild(c);});
