@@ -87,6 +87,9 @@
   .fititem{border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.025);padding:8px 10px}
   .fititem .fk{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:2px}
   .fititem .fv{font-size:12.5px;color:var(--ink);line-height:1.35}
+  .ratingbadges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+  .ratingbadge{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(202,164,78,.55);background:rgba(202,164,78,.12);color:var(--accent2);border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;line-height:1}
+  .ratingbadge .ri{color:var(--accent);font-size:12px;letter-spacing:1px}
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 14px}
   .chip{font-size:11px;padding:4px 9px;border-radius:20px;border:1px solid var(--line);background:var(--panel2);color:var(--accent2)}
   .ups{list-style:none;padding:0;margin:6px 0 0}
@@ -180,6 +183,7 @@
   </div>
   <div class="body">
     <div class="quote" id="d-desc" style="display:none"></div>
+    <div class="ratingbadges" id="d-ratings" style="display:none"></div>
     <div class="fitgrid" id="d-fitgrid" style="display:none">
       <div class="fititem"><div class="fk">Best Fit</div><div class="fv" id="d-bestfit">—</div></div>
       <div class="fititem"><div class="fk">Service Style</div><div class="fv" id="d-service">—</div></div>
@@ -617,6 +621,16 @@ function openDetail(f){
   grid.style.display=hasFit?"":"none";
   document.getElementById("d-bestfit").textContent=fit.bestFit||"—";
   document.getElementById("d-service").textContent=fit.serviceStyle||"—";
+  const ratings=document.getElementById("d-ratings"); ratings.innerHTML="";
+  const addRating=(icon,label)=>{
+    const b=document.createElement("span"); b.className="ratingbadge";
+    const i=document.createElement("span"); i.className="ri"; i.textContent=icon;
+    const l=document.createElement("span"); l.textContent=label;
+    b.append(i,l); ratings.appendChild(b);
+  };
+  if(fit.forbesRating){ addRating("\u2605",`Forbes ${fit.forbesRating} Star`); }
+  if(fit.aaaDiamondRating){ addRating("\u25c6",`AAA ${fit.aaaDiamondRating} Diamond`); }
+  ratings.style.display=ratings.children.length?"":"none";
   const chips=document.getElementById("d-chips"); chips.innerHTML="";
   [p.program,p.category,...(fit.intentTags||[]).slice(0,3)].filter(Boolean).forEach(t=>{const c=document.createElement("span");c.className="chip";c.textContent=t;chips.appendChild(c);});
   document.getElementById("d-addr").textContent=p.address||"—";
