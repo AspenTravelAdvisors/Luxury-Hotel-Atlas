@@ -24,6 +24,23 @@ function test(name, fn) {
 
 const ci = (s) => String(s == null ? "" : s).toLowerCase();
 const countRaw = (pred) => hotels.filter(pred).length;
+const CARIBBEAN_COUNTRIES = new Set([
+  "anguilla",
+  "antigua and barbuda",
+  "aruba",
+  "bahamas",
+  "barbados",
+  "cayman islands",
+  "curacao",
+  "dominican republic",
+  "grenada",
+  "jamaica",
+  "puerto rico",
+  "saint lucia",
+  "turks and caicos",
+  "turks and caicos islands",
+]);
+const isCaribbean = (h) => CARIBBEAN_COUNTRIES.has(ci(h.country));
 
 // --- dataset sanity --------------------------------------------------------
 test("dataset loaded (2500, unique ids)", () => {
@@ -69,6 +86,20 @@ test("region=japan (marquee key)", () => {
   assert.ok(r.results.every((h) => h.region === "japan"));
 });
 
+test("region=caribbean expands to Caribbean country inventory", () => {
+  const expect = countRaw(isCaribbean);
+  const r = query({ region: "caribbean", limit: 200 });
+  assert.equal(r.total, expect);
+  assert.ok(expect > 0);
+  assert.ok(r.results.every(isCaribbean));
+});
+
+test("country=Caribbean is accepted as the same broad alias", () => {
+  const r = query({ country: "Caribbean", limit: 200 });
+  assert.equal(r.total, countRaw(isCaribbean));
+  assert.ok(r.results.every(isCaribbean));
+});
+
 test("brand=aman is case-insensitive", () => {
   const expect = countRaw((h) => ci(h.brand) === "aman");
   const r = query({ brand: "aman", limit: 200 });
@@ -99,6 +130,12 @@ test("q free-text matches name/brand/city/country", () => {
         ci(h.country).includes("aman")
     )
   );
+});
+
+test("q free-text matches Caribbean as a regional alias", () => {
+  const r = query({ q: "caribbean", limit: 200 });
+  assert.equal(r.total, countRaw(isCaribbean));
+  assert.ok(r.results.every(isCaribbean));
 });
 
 test("q multi-word is token-AND with stopwords dropped", () => {

@@ -294,6 +294,27 @@ const catColor = c => CAT_COLORS[c] || "#caa44e";
 let FEATURES=[], MARKERS=[], map3d, PinElementClass, SELECTED=null;
 const state={ cats:new Set(), brands:new Set(), countries:new Set(), q:"",
   brand:null, region:null, ids:new Set() };  // brand/region/ids arrive via deep link
+const CARIBBEAN_COUNTRIES = new Set([
+  "anguilla",
+  "antigua and barbuda",
+  "aruba",
+  "bahamas",
+  "barbados",
+  "cayman islands",
+  "curacao",
+  "dominican republic",
+  "grenada",
+  "jamaica",
+  "puerto rico",
+  "saint lucia",
+  "turks and caicos",
+  "turks and caicos islands"
+]);
+function matchesRegionAlias(region,p){
+  const r=(region||"").toLowerCase();
+  if(r==="caribbean") return CARIBBEAN_COUNTRIES.has((p.country||"").toLowerCase());
+  return false;
+}
 
 /* ---- bootstrap loader for Google Maps JS ---- */
 function loadMaps(){
@@ -555,7 +576,7 @@ function matches(f){
   // deep-link-only axes
   if(state.ids.size && !state.ids.has(p.id)) return false;
   if(state.brand && (p.brand||"").toLowerCase()!==state.brand.toLowerCase()) return false;
-  if(state.region && (p.marqueeRegion||"").toLowerCase()!==state.region.toLowerCase()) return false;
+  if(state.region && (p.marqueeRegion||"").toLowerCase()!==state.region.toLowerCase() && !matchesRegionAlias(state.region,p)) return false;
   if(state.q){ const hay=(p.name+" "+p.city+" "+p.region+" "+p.country).toLowerCase(); if(hay.indexOf(state.q)<0) return false; }
   return true;
 }
