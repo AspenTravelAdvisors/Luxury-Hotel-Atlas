@@ -305,6 +305,8 @@ function loadMaps(){
 }
 
 async function init(){
+  const inventory = loadInventory();      // start the data fetch in parallel with the Maps bootstrap
+  inventory.catch(()=>{});                // rejection is handled at the await below; this avoids an unhandled-rejection if we bail first
   await fetchKey();
   try{ await loadMaps(); }
   catch(e){ showError(); return; }
@@ -328,7 +330,7 @@ async function init(){
       }
     }, {passive:false, capture:true});
 
-    FEATURES = await loadInventory();
+    FEATURES = await inventory;
     buildFilters();
     applyDeepLink();           // read ?region/brand/program/category/country/ids/q
     await buildMarkers();      // ends with applyFilters(), so the subset is live
@@ -345,23 +347,35 @@ function showError(){
   document.getElementById("veilErr").classList.remove("hidden");
 }
 
-/* ---- inventory load (single source of truth: /api/luxury-hotels) ---- */
+/* ---- inventory load (single source of truth: the shared data layer) ---- */
 async function loadInventory(){
-  // Primary path: the shared data layer behind /api, paginated to the 200 cap.
-  // Falls back to the bundled hotels.geojson if the endpoint is unreachable so
-  // the atlas still renders. The API returns normalized records, which we adapt
-  // back into the GeoJSON-feature shape the rest of this file expects.
+  // Primary path: atlas.geojson — one static, CDN-cached payload prebuilt from
+  // the same data layer behind /api (scripts/build-atlas-geojson.mjs), already
+  // in the GeoJSON-feature shape the rest of this file expects. One request
+  // replaces the old paginated crawl (13 sequential round trips at the 200
+  // cap). Falls back to /api/luxury-hotels (pages fetched in parallel), then
+  // to the raw hotels.geojson, so the atlas still renders either way.
   try{
-    const PAGE=200; let offset=0, total=Infinity; const out=[];
-    while(offset<total){
-      const r=await fetch(`/api/luxury-hotels?limit=${PAGE}&offset=${offset}`,{cache:"no-store"});
+    const r=await fetch("atlas.geojson");
+    if(!r.ok) throw new Error("atlas.geojson "+r.status);
+    const data=await r.json();
+    if(data.features && data.features.length) return data.features;
+    throw new Error("atlas.geojson empty");
+  }catch(err){
+    console.warn("atlas.geojson unavailable, falling back to /api/luxury-hotels:",err);
+  }
+  try{
+    const PAGE=200;
+    const page=async offset=>{
+      const r=await fetch(`/api/luxury-hotels?limit=${PAGE}&offset=${offset}`);
       if(!r.ok) throw new Error("api "+r.status);
-      const j=await r.json();
-      total=j.total||0;
-      for(const h of (j.results||[])) out.push(toFeature(h));
-      if(!j.results || !j.results.length) break;
-      offset+=j.results.length;
-    }
+      return r.json();
+    };
+    const first=await page(0);
+    const out=(first.results||[]).map(toFeature);
+    const rest=[];
+    for(let offset=PAGE;offset<(first.total||0);offset+=PAGE) rest.push(page(offset));
+    for(const j of await Promise.all(rest)) for(const h of (j.results||[])) out.push(toFeature(h));
     if(out.length) return out;
     throw new Error("api returned no records");
   }catch(err){

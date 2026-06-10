@@ -2,6 +2,10 @@
   "cleanUrls": true,
   "headers": [
     {
+      "source": "/atlas.geojson",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800" }]
+    },
+    {
       "source": "/hotels.geojson",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }]
     },
