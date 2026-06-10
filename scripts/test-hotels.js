@@ -100,6 +100,14 @@ test("country=Caribbean is accepted as the same broad alias", () => {
   assert.ok(r.results.every(isCaribbean));
 });
 
+test("island country aliases normalize in country and q searches", () => {
+  assert.ok(query({ country: "St Barts" }).total > 0);
+  assert.ok(query({ country: "St Barts" }).results.every((h) => ci(h.country) === "saint barthélemy"));
+  assert.ok(query({ q: "luxury hotels in St Barts" }).total > 0);
+  assert.ok(query({ q: "beach resorts in St Lucia" }).total > 0);
+  assert.ok(query({ q: "hotels in Turks & Caicos" }).results.some((h) => /parrot cay/i.test(h.name)));
+});
+
 test("brand=aman is case-insensitive", () => {
   const expect = countRaw((h) => ci(h.brand) === "aman");
   const r = query({ brand: "aman", limit: 200 });

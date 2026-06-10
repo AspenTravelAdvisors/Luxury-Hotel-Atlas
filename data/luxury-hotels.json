@@ -7655,7 +7655,7 @@
     "name": "COMO Parrot Cay",
     "brand": "COMO",
     "program": "Virtuoso",
-    "category": "City Hotel",
+    "category": "Beach Resort",
     "country": "Turks and Caicos",
     "city": "Providenciales",
     "address": "Parrot Cay Island",
@@ -7675,7 +7675,10 @@
     "bookPassword": "VIP",
     "thumb": null,
     "tags": [
-      "urban"
+      "beach",
+      "island",
+      "private-island",
+      "wellness"
     ]
   },
   {
@@ -7683,7 +7686,7 @@
     "name": "COMO Parrot Cay, Turks and Caicos",
     "brand": "COMO",
     "program": "Virtuoso",
-    "category": "City Hotel",
+    "category": "Beach Resort",
     "country": "Turks And Caicos Islands",
     "city": "Parrot Cay",
     "address": "Parrot Cay Island",
@@ -7703,7 +7706,10 @@
     "bookPassword": "VIP",
     "thumb": null,
     "tags": [
-      "urban"
+      "beach",
+      "island",
+      "private-island",
+      "wellness"
     ]
   },
   {
