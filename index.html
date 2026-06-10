@@ -709,8 +709,9 @@ init();
     .dockbtn{padding:0 13px}
     body:not(.rail-shown) .rail{opacity:0;transform:translateX(-12px) scale(.97);visibility:hidden;pointer-events:none}
     /* When filters shown on mobile: overlay the map from top */
-    body.rail-shown .rail{position:absolute !important;top:72px !important;left:12px !important;right:12px !important;
-      bottom:auto !important;width:auto !important;max-height:calc(100% - 140px) !important;
+    body.rail-shown .rail{position:absolute !important;top:72px !important;left:12px !important;right:auto !important;
+      bottom:auto !important;width:max-content !important;min-width:200px !important;
+      max-width:min(88vw,340px) !important;max-height:calc(100% - 140px) !important;
       border-radius:14px !important;transform:none !important;opacity:1 !important;
       visibility:visible !important;display:flex !important;
       background:rgba(17,21,29,.96) !important;border:1px solid var(--line) !important;
