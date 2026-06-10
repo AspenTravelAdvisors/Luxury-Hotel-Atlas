@@ -155,14 +155,22 @@ test("q can match fit keywords and notes", () => {
   ].filter(Boolean).join(" "))));
 });
 
-test("intent sorts by matching trip score", () => {
+test("intent sorts by blended trip score (match score + rating boost)", () => {
   const r = query({ country: "United States", intent: "simpleVip", limit: 10 });
   assert.equal(r.count, 10);
-  const topRating = Math.max(...r.results.map((h) => (h.fit && h.fit.aaaDiamondRating) || 0));
-  const ratedPrefix = r.results.filter((h) => ((h.fit && h.fit.aaaDiamondRating) || 0) === topRating);
-  const scores = ratedPrefix.map((h) => h.fit && h.fit.matchScores && h.fit.matchScores.simpleVip);
-  assert.ok(scores.every((v) => Number.isFinite(v)));
-  assert.ok(scores.every((v, i) => i === 0 || scores[i - 1] >= v));
+  const level = (v) => {
+    const t = String(v == null ? "" : v).toLowerCase();
+    if (Number(v) === 5 || t.includes("five") || t.includes("5")) return 5;
+    if (Number(v) === 4 || t.includes("four") || t.includes("4")) return 4;
+    return 0;
+  };
+  const blended = r.results.map((h) => {
+    const fit = h.fit || {};
+    const match = (fit.matchScores && fit.matchScores.simpleVip) || 0;
+    return match + Math.max(level(fit.forbesRating), level(fit.aaaDiamondRating)) * 2;
+  });
+  assert.ok(blended.every((v) => v > 0));
+  assert.ok(blended.every((v, i) => i === 0 || blended[i - 1] >= v));
 });
 
 test("AAA 5 Diamond hotels sort ahead of lower or unrated matches", () => {
