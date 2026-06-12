@@ -292,8 +292,9 @@ function brandLogoFallback(img, program){
 const catColor = c => CAT_COLORS[c] || "#caa44e";
 
 let FEATURES=[], MARKERS=[], map3d, PinElementClass, SELECTED=null;
+const DETAIL_CACHE=new Map();
 let idleSpinFrame=0, idleSpinLast=0, idleSpinStopped=false;
-const IDLE_SPIN_DEGREES_PER_SECOND=0.6;
+const IDLE_SPIN_LONGITUDE_DEGREES_PER_SECOND=0.6;
 const state={ cats:new Set(), brands:new Set(), countries:new Set(), q:"",
   brand:null, region:null, ids:new Set() };  // brand/region/ids arrive via deep link
 const CARIBBEAN_COUNTRIES = new Set([
@@ -318,7 +319,10 @@ function matchesRegionAlias(region,p){
   return false;
 }
 
-/* ---- idle map motion: slow spin until the first direct map interaction ---- */
+/* ---- idle map motion: slow east-to-west drift until the first direct map interaction ---- */
+function wrapLng(lng){
+  return ((((lng + 180) % 360) + 360) % 360) - 180;
+}
 function eventHitsMap(e){
   if(!map3d) return false;
   const path=typeof e.composedPath==="function" ? e.composedPath() : [];
@@ -338,8 +342,12 @@ function startIdleSpin(){
     const elapsed=Math.min((now-idleSpinLast)/1000,0.1);
     idleSpinLast=now;
     try{
-      const heading=Number(map3d.heading)||0;
-      map3d.heading=(heading + elapsed*IDLE_SPIN_DEGREES_PER_SECOND) % 360;
+      const c=map3d.center || {};
+      map3d.center={
+        lat:Number.isFinite(c.lat) ? c.lat : 18.2,
+        lng:wrapLng((Number.isFinite(c.lng) ? c.lng : -66.5) - elapsed*IDLE_SPIN_LONGITUDE_DEGREES_PER_SECOND),
+        altitude:Number.isFinite(c.altitude) ? c.altitude : 0
+      };
     }catch(_){
       stopIdleSpin();
       return;
@@ -369,8 +377,11 @@ async function init(){
   try{ await loadMaps(); }
   catch(e){ showError(); return; }
   try{
-    const {Map3DElement, MapMode} = await google.maps.importLibrary("maps3d");
-    const markerLib = await google.maps.importLibrary("marker");
+    const [maps3dLib, markerLib] = await Promise.all([
+      google.maps.importLibrary("maps3d"),
+      google.maps.importLibrary("marker")
+    ]);
+    const {Map3DElement, MapMode} = maps3dLib;
     PinElementClass = markerLib.PinElement;
 
     map3d = new Map3DElement({
@@ -414,16 +425,18 @@ async function loadInventory(){
   // the atlas still renders. The API returns normalized records, which we adapt
   // back into the GeoJSON-feature shape the rest of this file expects.
   try{
-    const PAGE=200; let offset=0, total=Infinity; const out=[];
-    while(offset<total){
-      const r=await fetch(`/api/luxury-hotels?limit=${PAGE}&offset=${offset}`,{cache:"no-store"});
+    const PAGE=200;
+    const fetchPage=async offset=>{
+      const r=await fetch(`/api/luxury-hotels?limit=${PAGE}&offset=${offset}&summary=1`);
       if(!r.ok) throw new Error("api "+r.status);
-      const j=await r.json();
-      total=j.total||0;
-      for(const h of (j.results||[])) out.push(toFeature(h));
-      if(!j.results || !j.results.length) break;
-      offset+=j.results.length;
-    }
+      return r.json();
+    };
+    const first=await fetchPage(0);
+    const total=first.total||0;
+    const offsets=[];
+    for(let offset=PAGE; offset<total; offset+=PAGE) offsets.push(offset);
+    const pages=[first,...(await Promise.all(offsets.map(fetchPage)))];
+    const out=pages.flatMap(j=>(j.results||[]).map(toFeature));
     if(out.length) return out;
     throw new Error("api returned no records");
   }catch(err){
@@ -445,9 +458,30 @@ function toFeature(h){
       region:h.adminRegion, marqueeRegion:h.region,
       address:h.address, upgrades:h.vipUpgrades,
       bookUrl:h.bookUrl, password:h.bookPassword,
-      fit:h.fit||null
+      fit:h.fit||null,
+      _detailLoaded:!!(h.address || h.fit || h.vipUpgrades)
     }
   };
+}
+function detailProps(h){
+  return {
+    brand:h.brand, program:h.program, category:h.category,
+    country:h.country, city:h.city, region:h.adminRegion,
+    marqueeRegion:h.region, address:h.address,
+    upgrades:h.vipUpgrades||[], bookUrl:h.bookUrl,
+    password:h.bookPassword, fit:h.fit||null,
+    _detailLoaded:true
+  };
+}
+async function hydrateFeatureDetail(f){
+  const p=f&&f.properties;
+  if(!p || p._detailLoaded || !p.id) return;
+  if(DETAIL_CACHE.has(p.id)){ Object.assign(p,DETAIL_CACHE.get(p.id)); return; }
+  const r=await fetch(`/api/luxury-hotels/${encodeURIComponent(p.id)}`);
+  if(!r.ok) throw new Error("detail "+r.status);
+  const full=detailProps(await r.json());
+  DETAIL_CACHE.set(p.id,full);
+  Object.assign(p,full);
 }
 
 /* ---- deep-link intake (chat-to-map handoff, SPEC §7) ---- */
@@ -668,8 +702,10 @@ function renderAC(){
 }
 
 /* ---- detail panel ---- */
-function openDetail(f){
+async function openDetail(f){
   stopIdleSpin();
+  try{ await hydrateFeatureDetail(f); }
+  catch(err){ console.warn("hotel detail unavailable:",err); }
   const p=f.properties;
   document.getElementById("d-cat").textContent=p.category||"Hotel";
   document.getElementById("d-cat").style.color=catColor(p.category);
