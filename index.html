@@ -292,6 +292,8 @@ function brandLogoFallback(img, program){
 const catColor = c => CAT_COLORS[c] || "#caa44e";
 
 let FEATURES=[], MARKERS=[], map3d, PinElementClass, SELECTED=null;
+let idleSpinFrame=0, idleSpinLast=0, idleSpinStopped=false;
+const IDLE_SPIN_DEGREES_PER_SECOND=0.6;
 const state={ cats:new Set(), brands:new Set(), countries:new Set(), q:"",
   brand:null, region:null, ids:new Set() };  // brand/region/ids arrive via deep link
 const CARIBBEAN_COUNTRIES = new Set([
@@ -314,6 +316,43 @@ function matchesRegionAlias(region,p){
   const r=(region||"").toLowerCase();
   if(r==="caribbean") return CARIBBEAN_COUNTRIES.has((p.country||"").toLowerCase());
   return false;
+}
+
+/* ---- idle map motion: slow spin until the first direct map interaction ---- */
+function eventHitsMap(e){
+  if(!map3d) return false;
+  const path=typeof e.composedPath==="function" ? e.composedPath() : [];
+  return path.indexOf(map3d)>=0 || e.target===map3d || (map3d.contains && map3d.contains(e.target));
+}
+function stopIdleSpin(){
+  if(idleSpinStopped) return;
+  idleSpinStopped=true;
+  if(idleSpinFrame) cancelAnimationFrame(idleSpinFrame);
+  idleSpinFrame=0;
+}
+function startIdleSpin(){
+  if(!map3d || idleSpinStopped || idleSpinFrame) return;
+  idleSpinLast=performance.now();
+  const tick=now=>{
+    if(idleSpinStopped || !map3d){ idleSpinFrame=0; return; }
+    const elapsed=Math.min((now-idleSpinLast)/1000,0.1);
+    idleSpinLast=now;
+    try{
+      const heading=Number(map3d.heading)||0;
+      map3d.heading=(heading + elapsed*IDLE_SPIN_DEGREES_PER_SECOND) % 360;
+    }catch(_){
+      stopIdleSpin();
+      return;
+    }
+    idleSpinFrame=requestAnimationFrame(tick);
+  };
+  idleSpinFrame=requestAnimationFrame(tick);
+}
+function bindIdleSpinStop(){
+  const stopIfMapEvent=e=>{ if(eventHitsMap(e)) stopIdleSpin(); };
+  ["pointerdown","mousedown","touchstart","click","wheel"].forEach(type=>{
+    window.addEventListener(type,stopIfMapEvent,{capture:true,passive:true});
+  });
 }
 
 /* ---- bootstrap loader for Google Maps JS ---- */
@@ -340,6 +379,7 @@ async function init(){
       mode: MapMode.HYBRID
     });
     document.body.appendChild(map3d);
+    bindIdleSpinStop();
 
     // Allow single-finger pan on mobile and scroll-to-zoom without Ctrl on desktop
     try { map3d.gestureHandling = 'greedy'; } catch(e) {}
@@ -356,6 +396,7 @@ async function init(){
     fitToResults();            // frame the map to the deep-linked subset
     highlightDeepLinkIds();    // enlarge (and, if single, open) any ids
     document.getElementById("veil").classList.add("hidden");
+    startIdleSpin();
     // tell an embedding app (Base Camp) the atlas is warm and ready for filters
     try{ if(window.parent && window.parent!==window) window.parent.postMessage({type:"ATLAS_READY"}, "*"); }catch(_){}
   }catch(e){ console.error(e); showError(); }
@@ -509,7 +550,7 @@ async function buildMarkers(){
       const pin=new PinElementClass({background:catColor(f.properties.category),borderColor:"#fffaf0",glyphColor:"#fffaf0",scale:0.7});
       m.append(pin); m._pin=pin;
     }catch(_){}
-    m.addEventListener("gmp-click",()=>openDetail(f));
+    m.addEventListener("gmp-click",()=>{ stopIdleSpin(); openDetail(f); });
     m._feat=f;
     m._pos={lat,lng,altitude:12};
     MARKERS.push(m);
@@ -628,6 +669,7 @@ function renderAC(){
 
 /* ---- detail panel ---- */
 function openDetail(f){
+  stopIdleSpin();
   const p=f.properties;
   document.getElementById("d-cat").textContent=p.category||"Hotel";
   document.getElementById("d-cat").style.color=catColor(p.category);
