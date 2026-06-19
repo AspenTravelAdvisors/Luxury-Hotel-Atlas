@@ -34,23 +34,41 @@
   .partner:hover{color:var(--ink)}
   .partner span{font-size:11px;letter-spacing:.6px;text-transform:uppercase;font-weight:600;white-space:nowrap}
 
+  /* translucent glass search bar (separate from filters) */
+  .searchbar{position:absolute;z-index:950;top:80px;left:50%;transform:translateX(-50%);
+    width:min(460px,calc(100vw - 28px));display:flex;align-items:center;gap:10px;
+    height:48px;padding:0 8px 0 15px;border-radius:30px;
+    background:rgba(20,25,34,.5);border:1px solid rgba(255,255,255,.16);
+    box-shadow:0 14px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);
+    -webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);
+    transition:border-color .18s,box-shadow .18s}
+  .searchbar:focus-within{border-color:rgba(202,164,78,.6);box-shadow:0 14px 44px rgba(0,0,0,.5),0 0 0 1px rgba(202,164,78,.35)}
+  .searchbar .sicon{width:18px;height:18px;color:var(--accent);flex:0 0 auto;opacity:.9}
+  .search{flex:1;min-width:0;width:100%;background:transparent;border:none;color:var(--ink);font-size:14.5px;font-family:var(--sans);letter-spacing:.2px;padding:0}
+  .search:focus{outline:none}
+  .search::placeholder{color:var(--muted)}
+  .sclear{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:none;background:transparent;color:var(--muted);
+    font-size:17px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;transition:.15s}
+  .sclear:hover{background:rgba(255,255,255,.08);color:var(--ink)}
+  .searchbar.has-text .sclear{display:inline-flex}
+
   /* filter rail */
-  .rail{position:absolute;z-index:900;top:80px;left:14px;width:288px;background:rgba(17,21,29,.94);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);backdrop-filter:blur(8px);display:flex;flex-direction:column;max-height:calc(100% - 100px)}
+  .rail{position:absolute;z-index:900;top:140px;left:14px;width:248px;background:rgba(17,21,29,.92);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);display:flex;flex-direction:column;max-height:calc(100% - 160px)}
   .rail .rhead{display:flex;align-items:center;justify-content:space-between;padding:13px 14px 10px;border-bottom:1px solid var(--line)}
   .rail .rhead h2{font-size:12px;text-transform:uppercase;letter-spacing:1.3px;color:var(--muted);margin:0}
   .rail .rhead .count{font-size:11.5px;color:var(--accent);font-variant-numeric:tabular-nums;font-weight:700}
-  .rail .scroller{overflow-y:auto;padding:6px 12px 12px}
-  .searchwrap{position:relative;margin:10px 0 4px}
-  .search{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:13px}
-  .search::placeholder{color:var(--muted)}
-  .aclist{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--panel2);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.45);overflow:hidden;display:none}
+  .rail .scroller{overflow-y:auto;padding:8px 12px 12px}
+  .aclist{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:30;background:rgba(20,25,34,.72);-webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);border:1px solid rgba(255,255,255,.14);border-radius:14px;box-shadow:0 18px 44px rgba(0,0,0,.55);overflow:hidden;display:none}
   .aclist.open{display:block}
-  .acrow{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;border-top:1px solid var(--line)}
+  .acsec{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-weight:700;padding:9px 13px 5px;background:rgba(0,0,0,.18)}
+  .acrow{display:flex;align-items:center;gap:9px;padding:9px 13px;cursor:pointer;border-top:1px solid rgba(255,255,255,.05)}
   .acrow:first-child{border-top:0}
-  .acrow:hover,.acrow.active{background:rgba(255,255,255,.06)}
-  .acrow .acsw{width:8px;height:8px;border-radius:50%;flex:none}
-  .acrow .acmain{font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .acrow .acsub{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
+  .acsec + .acrow{border-top:0}
+  .acrow:hover,.acrow.active{background:rgba(202,164,78,.14)}
+  .acrow .acsw{width:9px;height:9px;border-radius:50%;flex:none}
+  .acrow .acicon{width:18px;height:18px;flex:none;color:var(--accent);opacity:.85;display:flex;align-items:center;justify-content:center}
+  .acrow .acmain{font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .acrow .acsub{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap;padding-left:6px}
   .grp{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}
   .grp:first-of-type{border-top:0}
   .grp .gh{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:5px 2px;user-select:none}
@@ -119,6 +137,7 @@
   @media (max-width:680px){
     .topbar{height:58px;padding:8px 12px;gap:10px}
     gmp-map-3d{top:58px;height:calc(100% - 58px)}
+    .searchbar{top:72px;width:calc(100vw - 20px);height:46px}
     .topbar h1{font-size:18px}.topbar h1 .bev{display:none}
     .topbar p,.partner span{display:none}
     .logochip.mark{height:40px}.logochip.mark img{height:30px;max-width:120px}
@@ -153,20 +172,25 @@
   .afchip:hover{filter:brightness(1.06)}
 </style>
 
-<!-- filter rail -->
-<aside class="rail collapsed-none" id="rail">
+<!-- translucent glass search bar (search is separate from the filters) -->
+<div class="searchbar" id="searchBar">
+  <svg class="sicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+  <input class="search" id="search" type="text" placeholder="Search a hotel, city, town or region&hellip;" autocomplete="off" aria-label="Search a hotel, city, town or region">
+  <button class="sclear" id="searchClear" type="button" aria-label="Clear search">&times;</button>
+  <div class="aclist" id="aclist"></div>
+</div>
+
+<!-- filter rail (hidden on load — opened from the Filters pill) -->
+<aside class="rail" id="rail">
   <div class="railtoggle" id="railToggle">&#9776;&nbsp; Filters &amp; results</div>
   <div class="rhead">
     <h2>Filters</h2>
     <div class="count"><span id="count">2,500</span> shown</div>
   </div>
   <div class="scroller">
-    <div class="searchwrap">
-      <input class="search" id="search" type="text" placeholder="Search hotel or city&hellip;" autocomplete="off">
-      <div class="aclist" id="aclist"></div>
-    </div>
     <div class="activeFilters" id="activeFilters" style="display:none"></div>
-    <div class="grp" data-grp="cat"><div class="gh"><h3>Category</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-cat"></div></div>
+    <div class="grp" data-grp="region"><div class="gh"><h3>Region</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-region"></div></div>
+    <div class="grp collapsed" data-grp="cat"><div class="gh"><h3>Category</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-cat"></div></div>
     <div class="grp collapsed" data-grp="brand"><div class="gh"><h3>Brand / Program</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-brand"></div></div>
     <div class="grp collapsed" data-grp="country"><div class="gh"><h3>Country</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-country"></div></div>
     <div class="reset" id="reset">Reset all filters</div>
@@ -291,11 +315,47 @@ function brandLogoFallback(img, program){
 }
 const catColor = c => CAT_COLORS[c] || "#caa44e";
 
+/* Macro-regions — a short, human geographic filter built from each hotel's
+   country (the raw `region` field is a 600-way sub-national admin value, far
+   too granular for a checkbox list). Order here is the display order. */
+const REGION_OF_COUNTRY = (()=>{
+  const groups={
+    "North America":["united states","usa","canada","bermuda"],
+    "Caribbean":["saint barthelemy","saint barthélemy","bahamas","turks and caicos","turks and caicos islands",
+      "anguilla","dominican republic","jamaica","saint lucia","grenada","antigua and barbuda","puerto rico",
+      "british virgin islands","u.s. virgin islands","cayman islands","barbados","aruba","saint martin",
+      "saint kitts and nevis","curacao","dominica","saint vincent and the grenadines"],
+    "Mexico & Central America":["mexico","costa rica","panama","belize","nicaragua","honduras","guatemala","el salvador"],
+    "South America":["brazil","peru","argentina","chile","colombia","ecuador","uruguay","bolivia","paraguay","venezuela"],
+    "Europe":["italy","france","united kingdom","greece","spain","switzerland","portugal","germany","ireland",
+      "austria","turkey","croatia","russia","netherlands","hungary","czech republic","belgium","malta","cyprus",
+      "monaco","montenegro","sweden","denmark","slovenia","latvia","romania","iceland","poland","norway","finland",
+      "andorra","luxembourg","estonia","lithuania","albania","serbia","bulgaria","slovakia","ukraine"],
+    "Middle East":["united arab emirates","israel","qatar","oman","saudi arabia","jordan","bahrain","kuwait","lebanon"],
+    "Africa":["south africa","morocco","egypt","seychelles","kenya","mauritius","zambia","zimbabwe","rwanda",
+      "botswana","tanzania","mozambique","madagascar","cape verde","namibia","uganda","ethiopia","ghana","nigeria","tunisia"],
+    "Asia":["china","thailand","japan","maldives","indonesia","india","vietnam","singapore","philippines","cambodia",
+      "malaysia","south korea","sri lanka","bhutan","taiwan","nepal","mongolia","laos","hong kong","macau","myanmar"],
+    "Oceania":["australia","fiji","new zealand","french polynesia","cook islands","papua new guinea","vanuatu","samoa","tonga","new caledonia"],
+    "Polar":["antarctica","greenland"]
+  };
+  const m={};
+  for(const [region,countries] of Object.entries(groups))
+    for(const c of countries) m[c]=region;
+  return m;
+})();
+const REGION_ORDER=["North America","Caribbean","Mexico & Central America","South America",
+  "Europe","Middle East","Africa","Asia","Oceania","Polar"];
+function macroRegion(country){
+  return REGION_OF_COUNTRY[(country||"").trim().toLowerCase()] || null;
+}
+
 let FEATURES=[], MARKERS=[], map3d, PinElementClass, SELECTED=null;
 const DETAIL_CACHE=new Map();
+let CITY_INDEX=[], REGION_INDEX=[];   // place lookups for search (city/town/region)
 let idleSpinFrame=0, idleSpinLast=0, idleSpinStopped=false;
 const IDLE_SPIN_LONGITUDE_DEGREES_PER_SECOND=0.6;
-const state={ cats:new Set(), brands:new Set(), countries:new Set(), q:"",
+const state={ cats:new Set(), brands:new Set(), countries:new Set(), regions:new Set(), q:"",
   brand:null, region:null, ids:new Set() };  // brand/region/ids arrive via deep link
 const CARIBBEAN_COUNTRIES = new Set([
   "anguilla",
@@ -505,10 +565,11 @@ function applyParams(val){
     });
   };
   tick("grp-cat","cats",val("category"));
+  tick("grp-region","regions",val("regions"));  // macro-region (country-derived) axis
   tick("grp-brand","brands",val("program"));   // UI "Brand / Program" axis is program
   tick("grp-country","countries",val("country"));
   const q=val("q");
-  if(q){ const s=document.getElementById("search"); if(s) s.value=q; state.q=q.toLowerCase(); }
+  if(q){ const s=document.getElementById("search"); if(s){ s.value=q; const sb=document.getElementById("searchBar"); if(sb) sb.classList.add("has-text"); } state.q=q.toLowerCase(); }
   // deep-link-only axes (no checkbox UI): brand=actual brand, region=marquee key
   if(val("brand")) state.brand=val("brand");
   if(val("region")) state.region=val("region");
@@ -521,6 +582,7 @@ function applyParams(val){
 function buildShareUrl(){
   const p=new URLSearchParams();
   if(state.cats.size) p.set("category",[...state.cats].join(","));
+  if(state.regions.size) p.set("regions",[...state.regions].join(","));
   if(state.brands.size) p.set("program",[...state.brands].join(","));
   if(state.countries.size) p.set("country",[...state.countries].join(","));
   const sEl=document.getElementById("search");
@@ -536,10 +598,11 @@ window.__atlasShareUrl=buildShareUrl;
 // Clear every active filter without touching the URL/history (used before
 // applying an external filter pushed by the embedding app).
 function clearAllFilters(){
-  state.cats.clear();state.brands.clear();state.countries.clear();state.q="";
+  state.cats.clear();state.brands.clear();state.countries.clear();state.regions.clear();state.q="";
   state.brand=null;state.region=null;state.ids.clear();
   document.querySelectorAll(".opt input").forEach(c=>c.checked=false);
   const s=document.getElementById("search"); if(s) s.value="";
+  const sb=document.getElementById("searchBar"); if(sb) sb.classList.remove("has-text");
 }
 // Live re-filter from a Base Camp message: reset, apply, re-frame, highlight.
 function applyExternalFilter(params){
@@ -570,17 +633,43 @@ function renderActiveChips(){
     box.appendChild(c);
   }
 }
-function fitToResults(){
+/* ---- cinematic camera: tween pan + zoom to a target instead of snapping ----
+   Uses the Maps 3D flyCameraTo easing when present; falls back to a direct set
+   on older builds so the camera always lands on target. */
+function flyTo(opts){
   if(!map3d) return;
-  const shown=FEATURES.filter(matches);
-  if(!shown.length || shown.length===FEATURES.length) return; // keep default world view
+  stopIdleSpin();
+  const center={lat:opts.lat,lng:opts.lng,altitude:opts.altitude||0};
+  const tilt=opts.tilt==null?45:opts.tilt;
+  const heading=opts.heading==null?0:opts.heading;
+  const range=opts.range==null?2600:opts.range;
+  if(typeof map3d.flyCameraTo==="function"){
+    try{
+      map3d.flyCameraTo({
+        endCamera:{center,tilt,range,heading},
+        durationMillis:opts.duration||2200
+      });
+      return;
+    }catch(_){ /* fall through to instant set */ }
+  }
+  try{ map3d.center=center; map3d.range=range; map3d.tilt=tilt; map3d.heading=heading; }catch(_){}
+}
+// Compute the bounds of a set of features and fly the camera to frame them.
+function flyToFeatures(feats,opts){
+  if(!map3d || !feats || !feats.length) return;
   let minLa=90,maxLa=-90,minLo=180,maxLo=-180;
-  for(const f of shown){ const [lo,la]=f.geometry.coordinates;
+  for(const f of feats){ const [lo,la]=f.geometry.coordinates;
     if(la<minLa)minLa=la; if(la>maxLa)maxLa=la; if(lo<minLo)minLo=lo; if(lo>maxLo)maxLo=lo; }
   const cLat=(minLa+maxLa)/2, cLng=(minLo+maxLo)/2;
   const span=Math.max(maxLa-minLa,(maxLo-minLo)*Math.cos(cLat*Math.PI/180));
-  let range=Math.min(Math.max(span*111000*2.2, 4000), 12000000);
-  try{ map3d.center={lat:cLat,lng:cLng,altitude:0}; map3d.range=range; map3d.tilt=span>8?0:45; map3d.heading=0; }catch(_){}
+  const range=Math.min(Math.max(span*111000*2.2, (opts&&opts.minRange)||4000), 12000000);
+  flyTo({lat:cLat,lng:cLng,range,tilt:span>8?0:(opts&&opts.tilt!=null?opts.tilt:45),
+    heading:0,duration:(opts&&opts.duration)||2400});
+}
+function fitToResults(){
+  const shown=FEATURES.filter(matches);
+  if(!shown.length || shown.length===FEATURES.length) return; // keep default world view
+  flyToFeatures(shown);
 }
 function highlightDeepLinkIds(){
   if(!state.ids.size) return;
@@ -624,7 +713,38 @@ function counts(key){
   for(const f of FEATURES){ const v=f.properties[key]||"—"; m[v]=(m[v]||0)+1; }
   return Object.entries(m).sort((a,b)=>b[1]-a[1]);
 }
+function regionCounts(){
+  const m={};
+  for(const f of FEATURES){ const r=macroRegion(f.properties.country); if(r) m[r]=(m[r]||0)+1; }
+  return REGION_ORDER.filter(r=>m[r]).map(r=>[r,m[r]]);
+}
+function buildPlaceIndex(){
+  // Distinct cities (town === city in this data) and sub-national regions, so the
+  // search can offer "fly me to this place" results alongside hotels.
+  const cityMap=new Map(), regMap=new Map();
+  for(const f of FEATURES){
+    const p=f.properties;
+    if(p.city){
+      const k=(p.city+"|"+(p.country||"")).toLowerCase();
+      let e=cityMap.get(k);
+      if(!e){ e={type:"city",name:p.city,sub:[p.region,p.country].filter(Boolean).join(", "),feats:[]}; cityMap.set(k,e); }
+      e.feats.push(f);
+    }
+    if(p.region){
+      const k=p.region.toLowerCase();
+      let e=regMap.get(k);
+      if(!e){ e={type:"region",name:p.region,sub:p.country||"",feats:[]}; regMap.set(k,e); }
+      e.feats.push(f);
+    }
+  }
+  CITY_INDEX=[...cityMap.values()];
+  REGION_INDEX=[...regMap.values()];
+}
 function buildFilters(){
+  buildPlaceIndex();
+  // region (macro), in geographic display order
+  const region=document.getElementById("grp-region");
+  for(const [v,n] of regionCounts()){ region.appendChild(optRow("regions",v,n)); }
   // category (with color swatch), sorted by count
   const cat=document.getElementById("grp-cat");
   for(const [v,n] of counts("category")){
@@ -637,9 +757,16 @@ function buildFilters(){
 
   document.querySelectorAll(".grp .gh").forEach(h=>h.addEventListener("click",()=>h.parentElement.classList.toggle("collapsed")));
   const sIn=document.getElementById("search");
-  sIn.addEventListener("input",e=>{state.q=e.target.value.toLowerCase().trim();applyFilters();renderAC();});
+  const sBar=document.getElementById("searchBar");
+  const sClear=document.getElementById("searchClear");
+  const syncClear=()=>sBar.classList.toggle("has-text",!!sIn.value);
+  sIn.addEventListener("input",e=>{state.q=e.target.value.toLowerCase().trim();syncClear();applyFilters();renderAC();});
   sIn.addEventListener("focus",renderAC);
-  document.addEventListener("click",e=>{ if(!e.target.closest(".searchwrap")) document.getElementById("aclist").classList.remove("open"); });
+  if(sClear) sClear.addEventListener("click",()=>{
+    sIn.value=""; state.q=""; syncClear(); applyFilters();
+    document.getElementById("aclist").classList.remove("open"); sIn.focus();
+  });
+  document.addEventListener("click",e=>{ if(!e.target.closest("#searchBar")) document.getElementById("aclist").classList.remove("open"); });
   document.getElementById("reset").addEventListener("click",resetFilters);
   document.getElementById("close").addEventListener("click",()=>document.getElementById("panel").classList.remove("open"));
   /* railToggle no longer used — dock pills handle mobile toggle */
@@ -664,6 +791,7 @@ function optRow(setName,val,n,sw,program){
 function matches(f){
   const p=f.properties;
   if(state.cats.size && !state.cats.has(p.category)) return false;
+  if(state.regions.size && !state.regions.has(macroRegion(p.country))) return false;
   if(state.brands.size && !state.brands.has(p.program)) return false;
   if(state.countries.size && !state.countries.has(p.country)) return false;
   // deep-link-only axes
@@ -683,40 +811,75 @@ function applyFilters(){
   },90);
 }
 function resetFilters(){
-  state.cats.clear();state.brands.clear();state.countries.clear();state.q="";
+  state.cats.clear();state.brands.clear();state.countries.clear();state.regions.clear();state.q="";
   state.brand=null;state.region=null;state.ids.clear();
   document.querySelectorAll(".opt input").forEach(c=>c.checked=false);
   document.getElementById("search").value="";
+  document.getElementById("searchBar").classList.remove("has-text");
   renderActiveChips();
   // drop deep-link params so a reload starts clean
   try{ history.replaceState(null,"",location.pathname); }catch(_){}
   applyFilters();
 }
 
-/* ---- search autocomplete (local data only) ---- */
+/* ---- search autocomplete (local data only) — hotels + city/town/region ---- */
+const PLACE_ICON='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>';
 function renderAC(){
   const box=document.getElementById("aclist");
   const q=state.q;
   if(!q || q.length<2){ box.classList.remove("open"); box.innerHTML=""; return; }
-  // rank: name-startsWith first, then city-startsWith, then any substring
-  const score=f=>{const p=f.properties;const n=(p.name||"").toLowerCase(),c=(p.city||"").toLowerCase();
-    if(n.startsWith(q))return 0; if(c.startsWith(q))return 1;
-    if(n.includes(q))return 2; if(c.includes(q))return 3; return 4;};
-  const hits=FEATURES.filter(matches).map(f=>[score(f),f]).filter(x=>x[0]<4)
-    .sort((a,b)=>a[0]-b[0]).slice(0,8);
-  if(!hits.length){ box.classList.remove("open"); box.innerHTML=""; return; }
+
+  // hotels — searched across the whole atlas (search is independent of filters)
+  const hscore=f=>{const n=(f.properties.name||"").toLowerCase();
+    if(n.startsWith(q))return 0; if(n.includes(q))return 1; return 2;};
+  const hotels=FEATURES.map(f=>[hscore(f),f]).filter(x=>x[0]<2)
+    .sort((a,b)=>a[0]-b[0]).slice(0,5).map(x=>x[1]);
+
+  // places — cities/towns and sub-national regions
+  const pscore=e=>{const n=e.name.toLowerCase();
+    if(n.startsWith(q))return 0; if(n.includes(q))return 1; return 2;};
+  const places=[...CITY_INDEX,...REGION_INDEX].map(e=>[pscore(e),e]).filter(x=>x[0]<2)
+    .sort((a,b)=>a[0]-b[0] || b[1].feats.length-a[1].feats.length).slice(0,5).map(x=>x[1]);
+
+  if(!hotels.length && !places.length){ box.classList.remove("open"); box.innerHTML=""; return; }
   box.innerHTML="";
-  for(const [,f] of hits){
-    const p=f.properties;
-    const r=document.createElement("div"); r.className="acrow";
-    const sw=document.createElement("span"); sw.className="acsw"; sw.style.background=catColor(p.category);
-    const mn=document.createElement("span"); mn.className="acmain"; mn.textContent=p.name;
-    const sb=document.createElement("span"); sb.className="acsub"; sb.textContent=[p.city,p.country].filter(Boolean).join(", ");
-    r.append(sw,mn,sb);
-    r.addEventListener("click",()=>{ box.classList.remove("open"); openDetail(f); });
-    box.appendChild(r);
+
+  if(places.length){
+    const sec=document.createElement("div"); sec.className="acsec"; sec.textContent="Cities, towns & regions"; box.appendChild(sec);
+    for(const e of places){
+      const r=document.createElement("div"); r.className="acrow";
+      const ic=document.createElement("span"); ic.className="acicon"; ic.innerHTML=PLACE_ICON;
+      const mn=document.createElement("span"); mn.className="acmain"; mn.textContent=e.name;
+      const sb=document.createElement("span"); sb.className="acsub";
+      sb.textContent=(e.type==="region"?"Region":"City")+(e.sub?" · "+e.sub:"")+" · "+e.feats.length;
+      r.append(ic,mn,sb);
+      r.addEventListener("click",()=>selectPlace(e));
+      box.appendChild(r);
+    }
+  }
+  if(hotels.length){
+    const sec=document.createElement("div"); sec.className="acsec"; sec.textContent="Hotels"; box.appendChild(sec);
+    for(const f of hotels){
+      const p=f.properties;
+      const r=document.createElement("div"); r.className="acrow";
+      const sw=document.createElement("span"); sw.className="acsw"; sw.style.background=catColor(p.category);
+      const mn=document.createElement("span"); mn.className="acmain"; mn.textContent=p.name;
+      const sb=document.createElement("span"); sb.className="acsub"; sb.textContent=[p.city,p.country].filter(Boolean).join(", ");
+      r.append(sw,mn,sb);
+      r.addEventListener("click",()=>{ box.classList.remove("open"); openDetail(f); });
+      box.appendChild(r);
+    }
   }
   box.classList.add("open");
+}
+// Pick a city/town/region from search: reflect it in the bar and cinematically
+// frame the camera on all of its stays.
+function selectPlace(e){
+  document.getElementById("aclist").classList.remove("open");
+  const sIn=document.getElementById("search");
+  if(sIn){ sIn.value=e.name; state.q=e.name.toLowerCase(); document.getElementById("searchBar").classList.add("has-text"); }
+  applyFilters();
+  flyToFeatures(e.feats,{tilt:55,minRange:1800});
 }
 
 /* ---- detail panel ---- */
@@ -770,11 +933,8 @@ async function openDetail(f){
   if(SELECTED && SELECTED._pin) try{SELECTED._pin.scale=0.7;}catch(_){}
   if(sel && sel._pin) try{sel._pin.scale=1.25;}catch(_){}
   SELECTED=sel||null;
-  // fly the camera to the hotel
-  if(map3d){
-    map3d.center={lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],altitude:0};
-    map3d.range=2600; map3d.tilt=67;
-  }
+  // cinematically tween the camera to the hotel's coordinates
+  flyTo({lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],range:2600,tilt:67,duration:1800});
 }
 
 function formatVipBenefit(raw){
@@ -819,8 +979,8 @@ init();
     .dockbtn{padding:0 13px}
     body:not(.rail-shown) .rail{opacity:0;transform:translateX(-12px) scale(.97);visibility:hidden;pointer-events:none}
     /* When filters shown on mobile: overlay the map from top */
-    body.rail-shown .rail{position:absolute !important;top:72px !important;left:12px !important;right:12px !important;
-      bottom:auto !important;width:auto !important;max-height:calc(100% - 140px) !important;
+    body.rail-shown .rail{position:absolute !important;top:130px !important;left:12px !important;right:12px !important;
+      bottom:auto !important;width:auto !important;max-height:calc(100% - 200px) !important;
       border-radius:14px !important;transform:none !important;opacity:1 !important;
       visibility:visible !important;display:flex !important;
       background:rgba(17,21,29,.96) !important;border:1px solid var(--line) !important;
@@ -844,7 +1004,7 @@ init();
   var panelPill=document.getElementById('panelPill');
   function setIcon(btn,html){ btn.querySelector('.pi').innerHTML=html; }
   var mq=window.matchMedia("(max-width:640px)");
-  var railCollapsed=mq.matches; // hidden on mobile/small screens by default
+  var railCollapsed=true; // filters are only as wide as needed and hidden on load — opened via the Filters pill
   function syncRail(){
     body.classList.toggle('rail-hidden',railCollapsed);
     body.classList.toggle('rail-shown',!railCollapsed);
@@ -966,7 +1126,8 @@ init();
     .partner{align-self:flex-start}
     gmp-map-3d{top:calc(58px + env(safe-area-inset-top));height:calc(100% - 58px - env(safe-area-inset-top))}
     .veil{inset:calc(58px + env(safe-area-inset-top)) 0 0 0}
-    body.rail-shown .rail{top:calc(70px + env(safe-area-inset-top)) !important;left:10px !important;right:10px !important;max-height:calc(100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important}
+    .searchbar{top:calc(66px + env(safe-area-inset-top))}
+    body.rail-shown .rail{top:calc(124px + env(safe-area-inset-top)) !important;left:10px !important;right:10px !important;max-height:calc(100dvh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important}
     .panel{top:auto;bottom:calc(64px + env(safe-area-inset-bottom));height:calc(100dvh - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom));max-width:100%;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:0 -14px 34px rgba(0,0,0,.55)}
     .panel .hero{padding:18px 48px 14px 16px}
     .panel h3{font-size:23px}
