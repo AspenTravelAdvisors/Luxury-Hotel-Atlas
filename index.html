@@ -902,7 +902,13 @@ async function openDetail(f){
   document.getElementById("d-loc").textContent=[p.city,p.region,p.country].filter(Boolean).join(", ");
   const fit=p.fit||{};
   const desc=document.getElementById("d-desc");
-  if(fit.description){ desc.textContent=fit.description; desc.style.display=""; }
+  let dtext=(fit.description||"").trim();
+  // The dataset prefixes each blurb with the property name ("The Little Nell:
+  // a city stay…"). Drop it — it's already the panel title — and recapitalize
+  // the remainder so it reads as a sentence.
+  const ci=dtext.indexOf(": ");
+  if(ci>0 && ci<90){ dtext=dtext.slice(ci+2).replace(/^./,c=>c.toUpperCase()); }
+  if(dtext){ desc.textContent=dtext; desc.style.display=""; }
   else { desc.textContent=""; desc.style.display="none"; }
   const ratings=document.getElementById("d-ratings"); ratings.innerHTML="";
   const addRating=(icon,label)=>{
