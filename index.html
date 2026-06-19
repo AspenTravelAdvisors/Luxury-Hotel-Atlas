@@ -1150,7 +1150,9 @@ init();
     .veil{inset:calc(58px + env(safe-area-inset-top)) 0 0 0}
     .searchbar{top:calc(66px + env(safe-area-inset-top))}
     body.rail-shown .rail{top:calc(124px + env(safe-area-inset-top)) !important;left:10px !important;right:auto !important;width:230px !important;max-width:calc(100vw - 20px) !important;max-height:calc(100dvh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important}
-    .panel{top:auto;right:8px;bottom:calc(64px + env(safe-area-inset-bottom) + var(--vvb,0px));width:min(340px,calc(100vw - 16px));max-width:calc(100vw - 16px);height:min(64dvh,calc(100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));border-left:1px solid var(--line);border-top:1px solid var(--line);border-radius:16px;box-shadow:-10px 14px 34px rgba(0,0,0,.55)}
+    /* size to content so the whole card is visible without an inner scroll;
+       only clamp (and then scroll) if it would exceed the space above the dock */
+    .panel{top:auto;right:8px;bottom:calc(64px + env(safe-area-inset-bottom) + var(--vvb,0px));width:min(340px,calc(100vw - 16px));max-width:calc(100vw - 16px);height:auto;max-height:calc(100dvh - 136px - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--vvb,0px));border-left:1px solid var(--line);border-top:1px solid var(--line);border-radius:16px;box-shadow:-10px 14px 34px rgba(0,0,0,.55)}
     .panel .hero{padding:18px 48px 14px 16px}
     .panel h3{font-size:23px}
     .panel .body{padding:14px 16px 20px}
