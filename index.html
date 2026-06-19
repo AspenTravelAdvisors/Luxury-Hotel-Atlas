@@ -44,7 +44,8 @@
     transition:border-color .18s,box-shadow .18s}
   .searchbar:focus-within{border-color:rgba(202,164,78,.6);box-shadow:0 14px 44px rgba(0,0,0,.5),0 0 0 1px rgba(202,164,78,.35)}
   .searchbar .sicon{width:18px;height:18px;color:var(--accent);flex:0 0 auto;opacity:.9}
-  .search{flex:1;min-width:0;width:100%;background:transparent;border:none;color:var(--ink);font-size:14.5px;font-family:var(--sans);letter-spacing:.2px;padding:0}
+  /* 16px keeps iOS Safari from auto-zooming the page on focus */
+  .search{flex:1;min-width:0;width:100%;background:transparent;border:none;color:var(--ink);font-size:16px;font-family:var(--sans);letter-spacing:.2px;padding:0}
   .search:focus{outline:none}
   .search::placeholder{color:var(--muted)}
   .sclear{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:none;background:transparent;color:var(--muted);
@@ -1045,7 +1046,7 @@ init();
   .helpqual{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 16px}
   .helpform{display:flex;flex-direction:column;gap:10px}
   .helpform input,.helpform textarea{width:100%;background:var(--panel2);border:1px solid var(--line);
-    border-radius:10px;color:var(--ink);font:inherit;font-size:13.5px;padding:11px 12px;resize:vertical}
+    border-radius:10px;color:var(--ink);font:inherit;font-size:16px;padding:11px 12px;resize:vertical}
   .helpform input:focus,.helpform textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
   .helpform input::placeholder,.helpform textarea::placeholder{color:var(--muted)}
   .helpsubmit{margin-top:4px;padding:12px;border:none;border-radius:10px;cursor:pointer;font:inherit;
