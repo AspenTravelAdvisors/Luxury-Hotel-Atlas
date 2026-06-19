@@ -89,7 +89,7 @@
   .railtoggle{display:none!important}
 
   /* detail panel */
-  .panel{position:absolute;z-index:1001;top:64px;right:0;height:calc(100% - 64px);width:392px;max-width:92vw;background:linear-gradient(180deg,var(--panel),#080b10);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,.55);transform:translateX(105%);transition:transform .32s cubic-bezier(.22,.61,.36,1);display:flex;flex-direction:column}
+  .panel{position:absolute;z-index:1001;top:64px;right:0;height:calc(100% - 64px);width:300px;max-width:88vw;background:linear-gradient(180deg,var(--panel),#080b10);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,.55);transform:translateX(105%);transition:transform .32s cubic-bezier(.22,.61,.36,1);display:flex;flex-direction:column}
   .panel.open{transform:none}
   .panel .hero{position:relative;padding:24px 22px 18px;border-bottom:1px solid var(--line);background:radial-gradient(120% 120% at 80% 0%,rgba(202,164,78,.20),transparent 60%)}
   .panel .close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;font-size:15px}
@@ -141,7 +141,7 @@
     .topbar h1{font-size:18px}.topbar h1 .bev{display:none}
     .topbar p,.partner span{display:none}
     .logochip.mark{height:40px}.logochip.mark img{height:30px;max-width:120px}
-    .veil{inset:58px 0 0 0}.panel{top:58px;height:calc(100% - 58px);width:100%;max-width:100%}
+    .veil{inset:58px 0 0 0}.panel{top:58px;height:calc(100% - 58px);width:min(340px,calc(100vw - 24px));max-width:calc(100vw - 24px)}
     .hint{display:none}
   }
 </style>
@@ -654,17 +654,28 @@ function flyTo(opts){
   }
   try{ map3d.center=center; map3d.range=range; map3d.tilt=tilt; map3d.heading=heading; }catch(_){}
 }
-// Compute the bounds of a set of features and fly the camera to frame them.
+// Compute the bounds of a set of features and fly the camera to frame them so
+// every result pin stays in view. The east-west span is scaled by the viewport
+// aspect ratio, which keeps the framing consistent in portrait and landscape
+// (on a tall/narrow screen the horizontal extent is the binding constraint).
 function flyToFeatures(feats,opts){
   if(!map3d || !feats || !feats.length) return;
+  opts=opts||{};
   let minLa=90,maxLa=-90,minLo=180,maxLo=-180;
   for(const f of feats){ const [lo,la]=f.geometry.coordinates;
     if(la<minLa)minLa=la; if(la>maxLa)maxLa=la; if(lo<minLo)minLo=lo; if(lo>maxLo)maxLo=lo; }
   const cLat=(minLa+maxLa)/2, cLng=(minLo+maxLo)/2;
-  const span=Math.max(maxLa-minLa,(maxLo-minLo)*Math.cos(cLat*Math.PI/180));
-  const range=Math.min(Math.max(span*111000*2.2, (opts&&opts.minRange)||4000), 12000000);
-  flyTo({lat:cLat,lng:cLng,range,tilt:span>8?0:(opts&&opts.tilt!=null?opts.tilt:45),
-    heading:0,duration:(opts&&opts.duration)||2400});
+  const latSpan=maxLa-minLa;
+  const lngSpan=(maxLo-minLo)*Math.cos(cLat*Math.PI/180);
+  const aspect=Math.max((window.innerWidth||1)/(window.innerHeight||1),0.35);
+  const effSpan=Math.max(latSpan, lngSpan/aspect);
+  const pad=opts.pad||2.6;                 // margin so all pins reveal, never tight
+  const minRange=opts.minRange||9000;      // don't dive in too far on small clusters
+  let range=effSpan*111000*pad;
+  if(!isFinite(range)||range<=0) range=minRange;
+  range=Math.min(Math.max(range,minRange), 12000000);
+  flyTo({lat:cLat,lng:cLng,range,tilt:opts.tilt!=null?opts.tilt:(effSpan>6?0:45),
+    heading:0,duration:opts.duration||2400});
 }
 function fitToResults(){
   const shown=FEATURES.filter(matches);
@@ -879,7 +890,7 @@ function selectPlace(e){
   const sIn=document.getElementById("search");
   if(sIn){ sIn.value=e.name; state.q=e.name.toLowerCase(); document.getElementById("searchBar").classList.add("has-text"); }
   applyFilters();
-  flyToFeatures(e.feats,{tilt:55,minRange:1800});
+  flyToFeatures(e.feats,{tilt:45});
 }
 
 /* ---- detail panel ---- */
@@ -979,8 +990,8 @@ init();
     .dockbtn{padding:0 13px}
     body:not(.rail-shown) .rail{opacity:0;transform:translateX(-12px) scale(.97);visibility:hidden;pointer-events:none}
     /* When filters shown on mobile: overlay the map from top */
-    body.rail-shown .rail{position:absolute !important;top:130px !important;left:12px !important;right:12px !important;
-      bottom:auto !important;width:auto !important;max-height:calc(100% - 200px) !important;
+    body.rail-shown .rail{position:absolute !important;top:130px !important;left:12px !important;right:auto !important;
+      bottom:auto !important;width:230px !important;max-width:calc(100vw - 24px) !important;max-height:calc(100% - 200px) !important;
       border-radius:14px !important;transform:none !important;opacity:1 !important;
       visibility:visible !important;display:flex !important;
       background:rgba(17,21,29,.96) !important;border:1px solid var(--line) !important;
@@ -1127,8 +1138,8 @@ init();
     gmp-map-3d{top:calc(58px + env(safe-area-inset-top));height:calc(100% - 58px - env(safe-area-inset-top))}
     .veil{inset:calc(58px + env(safe-area-inset-top)) 0 0 0}
     .searchbar{top:calc(66px + env(safe-area-inset-top))}
-    body.rail-shown .rail{top:calc(124px + env(safe-area-inset-top)) !important;left:10px !important;right:10px !important;max-height:calc(100dvh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important}
-    .panel{top:auto;bottom:calc(64px + env(safe-area-inset-bottom));height:calc(100dvh - 76px - env(safe-area-inset-top) - env(safe-area-inset-bottom));max-width:100%;border-left:0;border-top:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:0 -14px 34px rgba(0,0,0,.55)}
+    body.rail-shown .rail{top:calc(124px + env(safe-area-inset-top)) !important;left:10px !important;right:auto !important;width:230px !important;max-width:calc(100vw - 20px) !important;max-height:calc(100dvh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important}
+    .panel{top:auto;right:8px;bottom:calc(64px + env(safe-area-inset-bottom));width:min(340px,calc(100vw - 16px));max-width:calc(100vw - 16px);height:min(64dvh,calc(100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));border-left:1px solid var(--line);border-top:1px solid var(--line);border-radius:16px;box-shadow:-10px 14px 34px rgba(0,0,0,.55)}
     .panel .hero{padding:18px 48px 14px 16px}
     .panel h3{font-size:23px}
     .panel .body{padding:14px 16px 20px}
