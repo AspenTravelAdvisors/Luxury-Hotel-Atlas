@@ -833,11 +833,15 @@ function renderAC(){
   const q=state.q;
   if(!q || q.length<2){ box.classList.remove("open"); box.innerHTML=""; return; }
 
-  // hotels — searched across the whole atlas (search is independent of filters)
-  const hscore=f=>{const n=(f.properties.name||"").toLowerCase();
-    if(n.startsWith(q))return 0; if(n.includes(q))return 1; return 2;};
-  const hotels=FEATURES.map(f=>[hscore(f),f]).filter(x=>x[0]<2)
-    .sort((a,b)=>a[0]-b[0]).slice(0,5).map(x=>x[1]);
+  // hotels — searched across the whole atlas (search is independent of filters).
+  // Match name, city or region so a place query (e.g. "Aspen") surfaces every
+  // hotel there, not just the ones with the place in their name.
+  const hscore=f=>{const p=f.properties;
+    const n=(p.name||"").toLowerCase(),c=(p.city||"").toLowerCase(),r=(p.region||"").toLowerCase();
+    if(n.startsWith(q))return 0; if(n.includes(q))return 1;
+    if(c.startsWith(q)||c.includes(q))return 2; if(r.startsWith(q)||r.includes(q))return 3; return 9;};
+  const hotels=FEATURES.map(f=>[hscore(f),f]).filter(x=>x[0]<9)
+    .sort((a,b)=>a[0]-b[0]).slice(0,6).map(x=>x[1]);
 
   // places — cities/towns and sub-national regions
   const pscore=e=>{const n=e.name.toLowerCase();
