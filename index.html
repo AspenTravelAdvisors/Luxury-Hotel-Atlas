@@ -128,9 +128,40 @@
   .veil p{color:var(--muted);font-size:14px;line-height:1.6;margin:8px 0}
   .veil code{background:#0a0d13;border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--accent2);font-size:12.5px}
   .veil a{color:var(--accent)}
-  .spinner{width:34px;height:34px;border:3px solid rgba(202,164,78,.25);border-top-color:var(--accent);border-radius:50%;margin:0 auto 18px}
+  .spinner{width:34px;height:34px;border:3px solid rgba(202,164,78,.25);border-top-color:var(--accent);border-radius:50%;margin:0 auto 18px;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .hidden{display:none!important}
+  /* mobile-only sheet chrome — hidden on desktop */
+  .sheetHandle,.sheetFooter,.sheetScrim{display:none}
+  /* loader: branded skeleton + determinate progress bar */
+  .veilSkeleton{position:absolute;inset:0;z-index:-1;overflow:hidden;
+    background:radial-gradient(46% 46% at 50% 42%,rgba(202,164,78,.10),transparent 70%),
+               radial-gradient(80% 80% at 50% 120%,rgba(91,141,214,.10),transparent 70%)}
+  .veilSkeleton:before{content:"";position:absolute;inset:-40% -10%;
+    background:linear-gradient(115deg,transparent 38%,rgba(236,223,194,.07) 50%,transparent 62%);
+    animation:shimmer 2.4s ease-in-out infinite}
+  @keyframes shimmer{0%{transform:translateX(-30%)}100%{transform:translateX(30%)}}
+  .veil .box{position:relative;z-index:1}
+  .loadbar{width:230px;max-width:70vw;height:4px;margin:20px auto 0;border-radius:4px;
+    background:rgba(202,164,78,.18);overflow:hidden}
+  .loadbar-fill{height:100%;width:0;border-radius:4px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    transition:width .5s cubic-bezier(.22,.61,.36,1)}
+  /* friendly error state */
+  .errmark{font-size:40px;color:var(--accent);margin-bottom:6px;opacity:.9}
+  .errbtn{display:inline-block;margin:4px 5px;padding:10px 20px;border-radius:30px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#10131a;
+    font-weight:700;font-size:13.5px;text-decoration:none}
+  .errbtn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .errbtn:hover{filter:brightness(1.05)}
+  .setupNote{margin-top:20px;text-align:left;max-width:440px;margin-left:auto;margin-right:auto;
+    border-top:1px solid var(--line);padding-top:12px}
+  .setupNote summary{cursor:pointer;font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;
+    color:var(--muted);list-style:none}
+  .setupNote summary::-webkit-details-marker{display:none}
+  .setupNote summary:before{content:"\25B8 ";color:var(--accent)}
+  .setupNote[open] summary:before{content:"\25BE "}
+  .setupNote p{font-size:12.5px;margin:8px 0}
 
   @media (max-width:680px){
     .topbar{height:58px;padding:8px 12px;gap:10px}
@@ -178,9 +209,13 @@
   <div class="aclist" id="aclist"></div>
 </div>
 
-<!-- filter rail (hidden on load — opened from the Filters pill) -->
+<!-- scrim behind mobile bottom sheets -->
+<div class="sheetScrim" id="sheetScrim"></div>
+
+<!-- filter rail (hidden on load — opened from the Filters pill; bottom sheet on mobile) -->
 <aside class="rail" id="rail">
   <div class="railtoggle" id="railToggle">&#9776;&nbsp; Filters &amp; results</div>
+  <div class="sheetHandle" id="railHandle" aria-hidden="true"><span></span></div>
   <div class="rhead">
     <h2>Filters</h2>
     <div class="count"><span id="count">2,500</span> shown</div>
@@ -193,10 +228,14 @@
     <div class="grp collapsed" data-grp="country"><div class="gh"><h3>Country</h3><span class="chev">&#9660;</span></div><div class="gbody" id="grp-country"></div></div>
     <div class="reset" id="reset">Reset all filters</div>
   </div>
+  <div class="sheetFooter" id="railFooter">
+    <button type="button" class="sheetApply" id="railApply">Show <span id="applyCount">2,500</span> stays</button>
+  </div>
 </aside>
 
-<!-- detail panel -->
+<!-- detail panel (snap-point bottom drawer on mobile) -->
 <section class="panel" id="panel">
+  <div class="sheetHandle drawerHandle" id="panelHandle" aria-hidden="true"><span></span></div>
   <div class="hero">
     <button class="close" id="close">&times;</button>
     <div class="klabel" id="d-cat">Hotel</div>
@@ -219,16 +258,29 @@
 
 <!-- veil: loading + setup help -->
 <div class="veil" id="veil">
+  <div class="veilSkeleton" aria-hidden="true"></div>
   <div class="box" id="veilLoad">
     <div class="spinner"></div>
     <h2>Loading the Atlas&hellip;</h2>
-    <p>Rendering photorealistic 3D terrain and 2,500 luxury stays.</p>
+    <p id="loadMsg">Rendering photorealistic 3D terrain and 2,500 luxury stays.</p>
+    <div class="loadbar" role="progressbar" aria-label="Loading the atlas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="loadBar">
+      <div class="loadbar-fill" id="loadFill"></div>
+    </div>
   </div>
   <div class="box hidden" id="veilErr">
-    <h2>Add your Google Maps key</h2>
-    <p>The 3D map needs a Google Maps Platform API key with the <b>Maps JavaScript API</b> and <b>Map Tiles API</b> enabled (billing on).</p>
-    <p>In Vercel, open <b>Project → Settings → Environment Variables</b>, add <code>GOOGLE_MAPS_API_KEY</code> with your key, then redeploy.</p>
-    <p style="margin-top:14px"><a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener">Get a key &rarr;</a> &middot; <a href="https://developers.google.com/maps/documentation/javascript/3d-maps-overview" target="_blank" rel="noopener">3D Maps docs &rarr;</a></p>
+    <div class="errmark" aria-hidden="true">&#9906;</div>
+    <h2>The Atlas is taking a moment</h2>
+    <p>Our photorealistic 3D map isn&rsquo;t available right now. Please refresh, or reach our concierge and we&rsquo;ll send curated recommendations straight to you.</p>
+    <p style="margin-top:14px">
+      <a class="errbtn" href="#" onclick="location.reload();return false;">Refresh</a>
+      <a class="errbtn ghost" href="mailto:Book@BeVvip.com?subject=Hotel%20Atlas%20%E2%80%94%20help">Contact concierge</a>
+    </p>
+    <details class="setupNote">
+      <summary>Setup details</summary>
+      <p>The 3D map needs a Google Maps Platform API key with the <b>Maps JavaScript API</b> and <b>Map Tiles API</b> enabled (billing on).</p>
+      <p>In Vercel, open <b>Project → Settings → Environment Variables</b>, add <code>GOOGLE_MAPS_API_KEY</code> with your key, then redeploy.</p>
+      <p><a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener">Get a key &rarr;</a> &middot; <a href="https://developers.google.com/maps/documentation/javascript/3d-maps-overview" target="_blank" rel="noopener">3D Maps docs &rarr;</a></p>
+    </details>
   </div>
 </div>
 
@@ -425,8 +477,19 @@ function loadMaps(){
   });
 }
 
+function setProgress(pct,msg){
+  const fill=document.getElementById("loadFill");
+  const bar=document.getElementById("loadBar");
+  const lbl=document.getElementById("loadMsg");
+  if(fill) fill.style.width=Math.max(0,Math.min(100,pct))+"%";
+  if(bar) bar.setAttribute("aria-valuenow",String(Math.round(pct)));
+  if(msg && lbl) lbl.textContent=msg;
+}
+
 async function init(){
+  setProgress(8,"Connecting to the Atlas…");
   await fetchKey();
+  setProgress(22,"Authorizing map tiles…");
   try{ await loadMaps(); }
   catch(e){ showError(); return; }
   try{
@@ -436,6 +499,7 @@ async function init(){
     ]);
     const {Map3DElement, MapMode} = maps3dLib;
     PinElementClass = markerLib.PinElement;
+    setProgress(45,"Rendering photorealistic 3D terrain…");
 
     map3d = new Map3DElement({
       center:{lat:18.2, lng:-66.5, altitude:0},
@@ -454,11 +518,13 @@ async function init(){
     }, {passive:false, capture:true});
 
     FEATURES = await loadInventory();
+    setProgress(70,"Placing 2,500 luxury stays…");
     buildFilters();
     applyDeepLink();           // read ?region/brand/program/category/country/ids/q
     await buildMarkers();      // ends with applyFilters(), so the subset is live
     fitToResults();            // frame the map to the deep-linked subset
     highlightDeepLinkIds();    // enlarge (and, if single, open) any ids
+    setProgress(100,"Welcome to the Atlas");
     document.getElementById("veil").classList.add("hidden");
     // Keep the loaded atlas stationary unless the traveler moves it.
     // tell an embedding app (Base Camp) the atlas is warm and ready for filters
@@ -1028,7 +1094,8 @@ init();
     var open=panel.classList.contains('open');
     body.classList.toggle('panel-active',open);
     if(!open){ body.classList.remove('panel-collapsed'); }
-    if(mq.matches){ railCollapsed=open; syncRail(); }   // only auto-hide filters on mobile/small screens
+    // On mobile, opening a hotel hides the filters sheet; closing it must NOT spring filters back open.
+    if(mq.matches && open && !railCollapsed){ railCollapsed=true; syncRail(); }
     syncPanel();
   }).observe(panel,{attributes:true,attributeFilter:['class']});
   var shareBtn=document.getElementById('shareDock');
@@ -1178,6 +1245,61 @@ init();
     .dockbtn{padding:0 10px}
   }
 </style>
+
+<!-- ===== Mobile bottom-sheet (filters) + bottom-drawer (details) — last style block so it overrides the 230px overlay / right-docked card ===== -->
+<style>
+@media (max-width:680px){
+  /* shared sheet chrome */
+  .sheetScrim{display:block;position:fixed;inset:0;z-index:1250;background:rgba(3,6,11,.5);
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+    opacity:0;pointer-events:none;transition:opacity .26s ease}
+  .sheetScrim.show{opacity:1;pointer-events:auto}
+  .sheetHandle{display:flex;justify-content:center;align-items:center;padding:9px 0 4px;
+    touch-action:none;cursor:grab}
+  .sheetHandle span{width:38px;height:5px;border-radius:5px;background:var(--line);display:block}
+
+  /* ---------- FILTERS: bottom sheet (supersedes the 230px top-left overlay) ---------- */
+  body.rail-shown .rail,
+  .rail{
+    position:fixed !important;left:0 !important;right:0 !important;
+    top:auto !important;bottom:0 !important;z-index:1300 !important;
+    width:100% !important;max-width:100% !important;max-height:86dvh !important;
+    border:1px solid var(--line) !important;border-bottom:0 !important;
+    border-radius:18px 18px 0 0 !important;
+    background:rgba(17,21,29,.98) !important;
+    box-shadow:0 -12px 40px rgba(0,0,0,.55) !important;
+    transform:translateY(100%) !important;
+    transition:transform .3s cubic-bezier(.22,.61,.36,1) !important;
+    opacity:1 !important;visibility:visible !important;display:flex !important;
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px) !important}
+  body.rail-shown .rail{transform:translateY(0) !important}
+  .rail .rhead{padding-top:2px}
+  .sheetFooter{display:block;border-top:1px solid var(--line);background:rgba(17,21,29,.98);
+    padding:10px 14px calc(12px + env(safe-area-inset-bottom) + var(--vvb,0px))}
+  .sheetApply{width:100%;padding:14px;border:none;border-radius:12px;cursor:pointer;font:inherit;
+    font-weight:800;font-size:15px;letter-spacing:.3px;color:#10131a;
+    background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .sheetApply:active{transform:scale(.99)}
+
+  /* ---------- DETAILS: bottom drawer with snap points (supersedes the right-docked card) ---------- */
+  .panel{
+    top:auto !important;bottom:0 !important;left:0 !important;right:0 !important;z-index:1300 !important;
+    width:100% !important;max-width:100% !important;height:54dvh !important;max-height:92dvh !important;
+    border-left:0 !important;border-top:1px solid var(--line) !important;
+    border-radius:18px 18px 0 0 !important;
+    box-shadow:0 -14px 44px rgba(0,0,0,.6) !important;
+    transform:translateY(100%);
+    /* transform animates the slide/drag; height snaps instantly between snap points
+       (dvh-to-dvh height transitions stall in Chromium) */
+    transition:transform .32s cubic-bezier(.22,.61,.36,1)}
+  .panel.open{transform:translateY(0)}
+  .panel.drawer-expanded{height:92dvh !important}
+  body.panel-collapsed .panel.open{transform:translateY(100%) !important}
+  .panel .hero{padding-top:4px}
+  .panel .close{top:8px}
+  .panel .body{padding-bottom:calc(20px + env(safe-area-inset-bottom) + var(--vvb,0px))}
+}
+</style>
 <script>
 (function(){try{
   var coach=document.getElementById('dockCoach'); if(!coach) return;
@@ -1191,6 +1313,86 @@ init();
   coach.addEventListener('click',dismiss);
   var dock=document.querySelector('.dock'); if(dock) dock.addEventListener('click',dismiss,{once:true});
 }catch(e){}})();
+</script>
+
+<!-- ===== Mobile sheet/drawer interactions (scrim, swipe-to-dismiss, snap points) ===== -->
+<script>
+(function(){
+  var mq=window.matchMedia("(max-width:680px)");
+  var body=document.body;
+  var rail=document.getElementById('rail');
+  var railPill=document.getElementById('railPill');
+  var panel=document.getElementById('panel');
+  var scrim=document.getElementById('sheetScrim');
+  var railHandle=document.getElementById('railHandle');
+  var rhead=rail.querySelector('.rhead');
+  var panelHandle=document.getElementById('panelHandle');
+  var applyBtn=document.getElementById('railApply');
+  var countEl=document.getElementById('count');
+  var applyCount=document.getElementById('applyCount');
+
+  function railOpen(){ return body.classList.contains('rail-shown'); }
+  function closeRail(){ if(railOpen()) railPill.click(); }
+  function panelOpen(){ return panel.classList.contains('open') && !body.classList.contains('panel-collapsed'); }
+  function closePanel(){ panel.classList.remove('open'); }
+  function expanded(){ return panel.classList.contains('drawer-expanded'); }
+
+  /* keep the sticky "Show N stays" button in sync with the live result count */
+  if(countEl && applyCount){
+    applyCount.textContent=countEl.textContent;
+    new MutationObserver(function(){ applyCount.textContent=countEl.textContent; })
+      .observe(countEl,{childList:true,characterData:true,subtree:true});
+  }
+  if(applyBtn) applyBtn.addEventListener('click',closeRail);
+
+  /* scrim mirrors whichever sheet is open (mobile only) */
+  function syncScrim(){
+    scrim.classList.toggle('show', mq.matches && (railOpen() || panelOpen()));
+  }
+  scrim.addEventListener('click',function(){ if(railOpen()) closeRail(); else if(panelOpen()) closePanel(); });
+  new MutationObserver(syncScrim).observe(body,{attributes:true,attributeFilter:['class']});
+
+  /* each fresh open of the drawer starts at the teaser snap */
+  var prevOpen=false;
+  new MutationObserver(function(){
+    var o=panel.classList.contains('open');
+    if(o && !prevOpen && mq.matches){ panel.classList.remove('drawer-expanded'); panel.style.removeProperty('transform'); }
+    prevOpen=o;
+    syncScrim();
+  }).observe(panel,{attributes:true,attributeFilter:['class']});
+  if(mq.addEventListener) mq.addEventListener('change',syncScrim);
+
+  /* generic vertical-drag helper, active only on mobile */
+  function dragify(grip,target,handlers){
+    var startY=0,dy=0,active=false;
+    grip.addEventListener('touchstart',function(e){ if(!mq.matches) return; active=true; startY=e.touches[0].clientY; dy=0; target.style.transition='none'; },{passive:true});
+    grip.addEventListener('touchmove',function(e){ if(!active) return; dy=e.touches[0].clientY-startY; handlers.move(dy,e); },{passive:false});
+    function end(){ if(!active) return; active=false; target.style.transition=''; handlers.end(dy); dy=0; }
+    grip.addEventListener('touchend',end);
+    grip.addEventListener('touchcancel',end);
+  }
+  function setT(el,y){ el.style.setProperty('transform','translateY('+y+'px)','important'); }
+  function clearT(el){ el.style.removeProperty('transform'); }
+
+  /* filters sheet — drag the handle or header down to dismiss */
+  function railGrip(grip){
+    dragify(grip,rail,{
+      move:function(dy,e){ if(dy>0){ e.preventDefault(); setT(rail,dy); } },
+      end:function(dy){ clearT(rail); if(dy>90) closeRail(); }
+    });
+  }
+  railGrip(railHandle); railGrip(rhead);
+
+  /* details drawer — drag to expand, collapse to teaser, or dismiss */
+  dragify(panelHandle,panel,{
+    move:function(dy,e){ e.preventDefault(); if(dy>0) setT(panel,dy); },
+    end:function(dy){
+      clearT(panel);
+      if(dy<-50 && !expanded()) panel.classList.add('drawer-expanded');
+      else if(dy>110){ if(expanded()) panel.classList.remove('drawer-expanded'); else closePanel(); }
+    }
+  });
+})();
 </script>
 </body>
 </html>
