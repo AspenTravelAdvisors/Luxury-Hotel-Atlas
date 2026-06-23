@@ -151909,5 +151909,34 @@
       "forbes": "Forbes Travel Guide 2026 Star Award Winners page; row payload unavailable in local source extraction",
       "aaa": "AAA Four/Five Diamond Hotels 2026 PDFs"
     }
+  },
+  "four seasons resort nevis|charlestown|saint kitts and nevis": {
+    "bestFit": "Celebration / milestone",
+    "intentTags": [
+      "Celebration / milestone",
+      "Family"
+    ],
+    "serviceStyle": "Formal / discreet",
+    "confidence": "Low",
+    "overallFitScore": 78.0,
+    "matchScores": {
+      "honeymoon": 74.0,
+      "couples": 74.0,
+      "family": 82.0,
+      "celebration": 80.0,
+      "wildlife": 62.0,
+      "active": 68.0,
+      "uhnw": 82.0,
+      "simpleVip": 80.0
+    },
+    "evaluationNotes": "Four Seasons Preferred Partner: formal/anticipatory service, top upgrade leverage; Pinney's Beach, Nevis",
+    "searchKeywords": [
+      "nevis",
+      "caribbean",
+      "beach",
+      "four seasons",
+      "family",
+      "celebration"
+    ]
   }
 }

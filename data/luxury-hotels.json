@@ -70056,5 +70056,31 @@
     "tags": [
       "urban"
     ]
+  },
+  {
+    "id": "h_02501",
+    "name": "Four Seasons Resort Nevis",
+    "brand": "Four Seasons",
+    "program": "Four Seasons Preferred Partner",
+    "category": "Resort / Leisure",
+    "country": "Saint Kitts And Nevis",
+    "city": "Charlestown",
+    "address": "Pinney's Beach",
+    "lat": 17.1647,
+    "lng": -62.6306,
+    "region": null,
+    "adminRegion": "Nevis",
+    "vipUpgrades": [
+      "Daily full American breakfast for 2",
+      "Tiered resort credit (typically $100 rooms; $200 suites; Private Retreats vary)",
+      "One-category upgrade at check-in (subject to availability)",
+      "VIP welcome note & enhanced management recognition"
+    ],
+    "bookUrl": "https://www.VipTravelAi.com",
+    "bookPassword": "VIP",
+    "thumb": null,
+    "tags": [
+      "resort"
+    ]
   }
 ]
