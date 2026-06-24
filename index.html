@@ -8,6 +8,7 @@
   :root{
     --bg:#0a0d13; --panel:#11151d; --panel2:#171c26; --line:#2a3340;
     --ink:#f4eee2; --muted:#a9a293; --accent:#caa44e; --accent2:#ecdfc2;
+    --accent-topbar:#e3cd78; /* lighter yellow for the topbar title, harmonizes with the pin palette */
     --shadow:0 12px 44px rgba(0,0,0,.5);
     --sans:'Segoe UI',Roboto,-apple-system,system-ui,Helvetica,Arial,sans-serif;
     --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
@@ -23,9 +24,9 @@
   .topbar{position:absolute;top:0;left:0;right:0;height:64px;z-index:1000;display:flex;align-items:center;gap:14px;padding:10px 18px;background:linear-gradient(180deg,#070a0f,#0a0d13);border-bottom:1px solid var(--line)}
   .brand{display:flex;align-items:center;gap:13px;min-width:0}
   .topbar h1{font-family:var(--serif);font-size:23px;margin:0;letter-spacing:.4px;font-weight:600;line-height:1;white-space:nowrap}
-  .topbar h1 span{color:var(--accent)}
+  .topbar h1 span{color:var(--accent-topbar)}
   .topbar h1 a.bev{color:inherit;text-decoration:none;transition:.15s}
-  .topbar h1 a.bev:hover{color:var(--accent)}
+  .topbar h1 a.bev:hover{color:var(--accent-topbar)}
   .topbar p{margin:3px 0 0;font-size:12px;color:var(--muted)}
   .logochip{background:#fff;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.25)}
   .logochip img{display:block;object-fit:contain}
