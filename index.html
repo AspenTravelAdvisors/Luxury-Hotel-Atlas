@@ -1033,7 +1033,7 @@ async function openDetail(f){
     progEl.textContent=p.program||"—";
   }
   const ups=document.getElementById("d-ups"); ups.innerHTML="";
-  (p.upgrades||[]).forEach(u=>{const li=document.createElement("li");li.textContent=formatVipBenefit(u);ups.appendChild(li);});
+  (p.upgrades||[]).forEach(u=>{const li=document.createElement("li");li.innerHTML=formatVipBenefit(u);ups.appendChild(li);});
   const book=document.getElementById("d-book");
   let url=(p.bookUrl||"").trim(); if(url && !/^https?:/i.test(url)) url="https://"+url;
   if(url){ book.href=url; book.style.display=""; } else book.style.display="none";
@@ -1048,11 +1048,15 @@ async function openDetail(f){
   flyTo({lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],range:2600,tilt:67,duration:1800});
 }
 
+function escapeHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function formatVipBenefit(raw){
   const text=String(raw==null?"":raw).trim();
-  if(!text || /^["']?first priority["']?\b/i.test(text)) return text;
-  if(/^room upgrade\b/i.test(text) || /^upgrade\b/i.test(text)) return '"First Priority" '+text;
-  return text;
+  if(!text) return text;
+  const stripped=text.replace(/^["']?first priority["']?\s*/i,"");
+  if(/^room upgrade\b/i.test(stripped) || /^upgrade\b/i.test(stripped)){
+    return '<em>First Priority</em> '+escapeHtml(stripped);
+  }
+  return escapeHtml(text);
 }
 
 init();
