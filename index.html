@@ -1648,8 +1648,9 @@ init();
 
   render();
   var force=/(?:[?#&])(?:tour|intro)\b/i.test(location.search+location.hash);
+  var inIframe=false;try{inIframe=window.self!==window.top;}catch(e){inIframe=true;}
   var seen=false;try{seen=localStorage.getItem(INTRO.key)==='1';}catch(e){}
-  if(force||!seen){
+  if(force||(!seen&&!inIframe)){
     if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches){
       scrim.classList.add('bvi-open');scrim.setAttribute('aria-hidden','false');
     }else{requestAnimationFrame(function(){requestAnimationFrame(open);});}
