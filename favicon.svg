@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<defs>
+<linearGradient id="hotelatlas-bg" x1="0" y1="0" x2="0.35" y2="1">
+<stop offset="0" stop-color="#152744"/><stop offset="1" stop-color="#070e1c"/>
+</linearGradient>
+<linearGradient id="hotelatlas-acc" x1="0.1" y1="0" x2="0.9" y2="1">
+<stop offset="0" stop-color="#ffd98e"/><stop offset="1" stop-color="#d09a33"/>
+</linearGradient>
+<radialGradient id="hotelatlas-sheen" cx="0.28" cy="0.1" r="0.95">
+<stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+<stop offset="0.62" stop-color="#ffffff" stop-opacity="0"/>
+</radialGradient>
+</defs>
+<rect x="32" y="32" width="960" height="960" rx="216" fill="url(#hotelatlas-bg)"/>
+<rect x="32" y="32" width="960" height="960" rx="216" fill="url(#hotelatlas-sheen)"/>
+<rect x="46" y="46" width="932" height="932" rx="202" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-width="4"/>
+<path d="M512 208c-124 0-224 98-224 220 0 158 190 350 214 374a14 14 0 0 0 20 0c24-24 214-216 214-374 0-122-100-220-224-220z" fill="url(#hotelatlas-acc)"/>
+<g fill="#ffffff">
+<rect x="404" y="336" width="216" height="222" rx="18" fill-opacity="0.95"/>
+</g>
+<g fill="url(#hotelatlas-acc)">
+<rect x="436" y="374" width="52" height="52" rx="8"/><rect x="512" y="374" width="52" height="52" rx="8"/>
+<rect x="436" y="450" width="52" height="52" rx="8"/><rect x="512" y="450" width="52" height="52" rx="8"/>
+</g>
+<path d="M742 212 Q753.16 262.84 804 274 Q753.16 285.16 742 336 Q730.84 285.16 680 274 Q730.84 262.84 742 212 Z" fill="#ffffff" opacity="0.75"/>
+</svg>
